@@ -1,27 +1,17 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import {
-  LayoutDashboard,
-  BedDouble,
-  Utensils,
-  Tag,
+import { Link, useLocation,useNavigate  } from "react-router-dom";
+import { 
+  LayoutDashboard, 
+  BedDouble, 
+  Utensils, 
+  Tag, 
+  Info, 
   LogOut,
-  Settings,
-} from "lucide-react";
+  Settings
+} from "lucide-react"; // Icons ke liye lucide-react ka use kiya hai
 
 export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-
-  const handleLogout = () => {
-    // Remove token
-    localStorage.removeItem("adminToken");
-
-    // If redirecting to external site:
-    window.location.href = "https://the-galaxy-chi.vercel.app/";
-
-    // If you instead want internal navigation:
-    // navigate("/login-success");
-  };
 
   const menuItems = [
     { name: "Dashboard", path: "/", icon: <LayoutDashboard size={20} /> },
@@ -31,10 +21,18 @@ export default function Sidebar() {
     { name: "Settings", path: "/settings", icon: <Settings size={20} /> },
   ];
 
+  const handleLogout = () => {
+    console.log("heloo varsha")
+    
+
+    // simple navigate
+     window.location.href = "https://the-galaxy-chi.vercel.app/"
+  };
+
+
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-100 shadow-sm flex flex-col">
-
-      {/* Logo Section */}
+      {/* Logo Section - Same as Navbar */}
       <div className="p-6 border-b border-gray-50">
         <Link to="/" className="text-2xl font-serif tracking-wide">
           <span className="text-black">The</span>
@@ -45,14 +43,10 @@ export default function Sidebar() {
         </p>
       </div>
 
-      {/* Navigation */}
+      {/* Navigation Links */}
       <nav className="flex-1 p-4 space-y-2 mt-4">
         {menuItems.map((item) => {
-          const isActive =
-            item.path === "/"
-              ? location.pathname === "/"
-              : location.pathname.startsWith(item.path);
-
+          const isActive = location.pathname === item.path;
           return (
             <Link
               key={item.name}
@@ -63,24 +57,16 @@ export default function Sidebar() {
                   : "text-gray-600 hover:bg-gray-50 hover:text-[#C6A45C]"
               }`}
             >
-              <span
-                className={`${
-                  isActive
-                    ? "text-white"
-                    : "text-[#C6A45C] group-hover:scale-110 transition-transform"
-                }`}
-              >
+              <span className={`${isActive ? "text-white" : "text-[#C6A45C] group-hover:scale-110 transition-transform"}`}>
                 {item.icon}
               </span>
-              <span className="tracking-wide uppercase text-[12px]">
-                {item.name}
-              </span>
+              <span className="tracking-wide uppercase text-[12px]">{item.name}</span>
             </Link>
           );
         })}
       </nav>
 
-      {/* Logout */}
+      {/* Logout / Bottom Section */}
       <div className="p-4 border-t border-gray-100">
         <button
           onClick={handleLogout}
@@ -90,7 +76,8 @@ export default function Sidebar() {
           <span>Logout</span>
         </button>
       </div>
-
     </aside>
   );
 }
+
+

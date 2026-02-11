@@ -15,9 +15,6 @@ import Settings from "./Pages/Settings";
 const AdminProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("adminToken");
 
-  if (!token) {
-    return <Navigate to="/login-success" replace />;
-  }
 
   return children;
 };

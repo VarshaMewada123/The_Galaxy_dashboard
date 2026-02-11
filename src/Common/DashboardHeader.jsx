@@ -6,22 +6,22 @@ const AdminHeader = ({ onSidebarToggle, admin = {} }) => {
 
   const getPageTitle = () => {
     switch (location.pathname) {
-      case "/admin":
-      case "/admin/dashboard":
+      case "/":
+      case "/dashboard":
         return "Dashboard Overview";
-      case "/admin/rooms":
+      case "/rooms":
         return "Rooms Management";
-      case "/admin/bookings":
+      case "/bookings":
         return "Guest Bookings";
-      case "/admin/dining":
+      case "/dining":
         return "Dining & Menu";
-      case "/admin/gallery":
+      case "/gallery":
         return "Media Gallery";
-      case "/admin/home":
+      case "/home":
         return "Home Content";
-      case "/admin/about":
+      case "/about":
         return "About Content";
-      case "/admin/settings":
+      case "/settings":
         return "System Settings";
       default:
         return "Admin Panel";
@@ -54,9 +54,9 @@ const AdminHeader = ({ onSidebarToggle, admin = {} }) => {
       <div className="flex items-center gap-5">
         {/* Notifications */}
         <Link
-          to="/admin/notifications"
+          to="/notifications"
           className={`relative p-2.5 rounded-full transition-all duration-300 ${
-            location.pathname === "/admin/notifications"
+            location.pathname === "/notifications"
               ? "bg-[#C6A45C] text-white shadow-md shadow-[#c6a45c44]"
               : "text-gray-500 hover:bg-gray-50 hover:text-[#C6A45C]"
           }`}
@@ -75,7 +75,7 @@ const AdminHeader = ({ onSidebarToggle, admin = {} }) => {
 
         {/* Profile Section */}
         <Link
-          to="/admin/profile"
+          to="/profile"
           className="flex items-center gap-3 group transition-all duration-300"
         >
           <div className="text-right hidden sm:block">
