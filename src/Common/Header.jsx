@@ -41,8 +41,7 @@ const Header = () => {
   }, [location.pathname]);
 
   const isActive = (path) =>
-    location.pathname === path ||
-    location.pathname.startsWith(path + "/");
+    location.pathname === path || location.pathname.startsWith(path + "/");
 
   return (
     <header
@@ -50,12 +49,11 @@ const Header = () => {
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b",
         isScrolled
           ? "bg-white/90 backdrop-blur-md shadow-md py-2 border-gray-200"
-          : "bg-white/50 backdrop-blur-sm py-4 border-transparent"
+          : "bg-white/50 backdrop-blur-sm py-4 border-transparent",
       )}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
-          {/* LOGO */}
           <Link to="/" className="flex items-center gap-2 group">
             <div className="bg-gradient-to-br from-blue-600 to-indigo-600 p-2 rounded-lg shadow-lg group-hover:shadow-blue-500/30 transition">
               <ShieldCheck className="h-6 w-6 text-white" />
@@ -65,7 +63,6 @@ const Header = () => {
             </span>
           </Link>
 
-          {/* DESKTOP NAV */}
           <nav className="hidden md:flex items-center gap-2 bg-slate-100/50 p-1.5 rounded-full border border-slate-200/50 backdrop-blur-sm">
             {navigations.map(({ title, path, icon: Icon }) => {
               const active = isActive(path);
@@ -78,14 +75,18 @@ const Header = () => {
                     "relative px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 transition",
                     active
                       ? "text-white"
-                      : "text-slate-600 hover:text-blue-600"
+                      : "text-slate-600 hover:text-blue-600",
                   )}
                 >
                   {active && (
                     <motion.div
                       layoutId="activeTab"
                       className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full -z-10 shadow-md"
-                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      transition={{
+                        type: "spring",
+                        bounce: 0.2,
+                        duration: 0.6,
+                      }}
                     />
                   )}
 
@@ -96,7 +97,6 @@ const Header = () => {
             })}
           </nav>
 
-          {/* MOBILE TOGGLE */}
           <button
             onClick={() => setIsMobileMenuOpen((p) => !p)}
             aria-label="Toggle menu"
@@ -107,7 +107,6 @@ const Header = () => {
         </div>
       </div>
 
-      {/* MOBILE MENU */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
@@ -128,13 +127,13 @@ const Header = () => {
                       "flex items-center gap-3 px-4 py-3 rounded-xl transition",
                       active
                         ? "bg-blue-50 text-blue-700 font-semibold"
-                        : "text-slate-600 hover:bg-slate-50"
+                        : "text-slate-600 hover:bg-slate-50",
                     )}
                   >
                     <Icon
                       className={cn(
                         "w-4 h-4",
-                        active ? "text-blue-600" : "text-slate-400"
+                        active ? "text-blue-600" : "text-slate-400",
                       )}
                     />
                     {title}

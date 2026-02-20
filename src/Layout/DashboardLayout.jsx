@@ -8,7 +8,6 @@ const MainLayout = () => {
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
-      {/* SIDEBAR */}
       <aside
         className={`
           bg-white border-r border-gray-100 shadow-xl
@@ -23,7 +22,6 @@ const MainLayout = () => {
         )}
       </aside>
 
-      {/* MAIN */}
       <div className="flex flex-col flex-1 min-w-0">
         <AdminHeader
           onSidebarToggle={() => setIsSidebarOpen((p) => !p)}
@@ -39,6 +37,3 @@ const MainLayout = () => {
 };
 
 export default MainLayout;
-
-
-

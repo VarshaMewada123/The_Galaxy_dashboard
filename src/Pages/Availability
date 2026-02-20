@@ -1,0 +1,30 @@
+const stock = [
+  { item: "Burger Bun", qty: 40 },
+  { item: "Chicken", qty: 8 },
+  { item: "Cheese Slice", qty: 5 },
+];
+
+export default function Inventory() {
+  return (
+    <div className="p-6">
+      <h1 className="text-xl font-semibold mb-6">Inventory</h1>
+
+      {stock.map((s, i) => (
+        <div
+          key={i}
+          className="bg-white p-4 rounded shadow flex justify-between mb-3"
+        >
+          <span>{s.item}</span>
+
+          <span
+            className={`font-semibold ${
+              s.qty < 10 ? "text-red-500" : "text-green-600"
+            }`}
+          >
+            {s.qty} left
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}

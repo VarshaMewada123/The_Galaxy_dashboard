@@ -5,34 +5,26 @@ const AdminHeader = ({ onSidebarToggle, admin = {} }) => {
   const location = useLocation();
 
   const getPageTitle = () => {
-    switch (location.pathname) {
-      case "/":
-      case "/dashboard":
-        return "Dashboard Overview";
-      case "/rooms":
-        return "Rooms Management";
-      case "/bookings":
-        return "Guest Bookings";
-      case "/dining":
-        return "Dining & Menu";
-      case "/gallery":
-        return "Media Gallery";
-      case "/home":
-        return "Home Content";
-      case "/about":
-        return "About Content";
-      case "/settings":
-        return "System Settings";
-      default:
-        return "Admin Panel";
-    }
+    const path = location.pathname;
+
+    if (path.startsWith("/admin/dashboard")) return "Dashboard Overview";
+    if (path.startsWith("/admin/rooms")) return "Rooms Management";
+    if (path.startsWith("/admin/bookings")) return "Guest Bookings";
+    if (path.startsWith("/admin/dining")) return "Dining & Menu";
+    if (path.startsWith("/admin/hotel-images")) return "Hotel Gallery";
+    if (path.startsWith("/admin/dining-images")) return "Dining Gallery";
+    if (path.startsWith("/admin/offers")) return "Offers & Promotions";
+    if (path.startsWith("/admin/settings")) return "System Settings";
+    if (path.startsWith("/admin/profile")) return "Admin Profile";
+    if (path.startsWith("/admin/notifications")) return "Notifications";
+
+    return "Admin Panel";
   };
 
   const unreadCount = admin?.notificationsCount || 0;
 
   return (
     <header className="flex items-center justify-between h-20 bg-white px-8 border-b border-gray-100 sticky top-0 z-50 shadow-sm">
-      {/* LEFT SECTION */}
       <div className="flex items-center gap-6">
         <button
           onClick={onSidebarToggle}
@@ -46,17 +38,15 @@ const AdminHeader = ({ onSidebarToggle, admin = {} }) => {
           <h1 className="text-xl font-serif text-black tracking-wide">
             {getPageTitle()}
           </h1>
-          <div className="h-0.5 w-8 bg-[#C6A45C] mt-1"></div> {/* Royal accent line */}
+          <div className="h-0.5 w-8 bg-[#C6A45C] mt-1"></div>
         </div>
       </div>
 
-      {/* RIGHT SECTION */}
       <div className="flex items-center gap-5">
-        {/* Notifications */}
         <Link
-          to="/notifications"
+          to="/admin/notifications"
           className={`relative p-2.5 rounded-full transition-all duration-300 ${
-            location.pathname === "/notifications"
+            location.pathname.startsWith("/admin/notifications")
               ? "bg-[#C6A45C] text-white shadow-md shadow-[#c6a45c44]"
               : "text-gray-500 hover:bg-gray-50 hover:text-[#C6A45C]"
           }`}
@@ -70,12 +60,10 @@ const AdminHeader = ({ onSidebarToggle, admin = {} }) => {
           )}
         </Link>
 
-        {/* Vertical Divider */}
         <div className="h-8 w-[1px] bg-gray-200 mx-2"></div>
 
-        {/* Profile Section */}
         <Link
-          to="/profile"
+          to="/admin/profile"
           className="flex items-center gap-3 group transition-all duration-300"
         >
           <div className="text-right hidden sm:block">
@@ -112,4 +100,3 @@ const AdminHeader = ({ onSidebarToggle, admin = {} }) => {
 };
 
 export default AdminHeader;
-
