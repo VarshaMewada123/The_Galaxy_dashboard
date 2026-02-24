@@ -52,3 +52,5 @@ export const deleteMenuItem = async (id) => {
   const res = await axiosClient.delete(`/admin/dining/menu/${id}`);
   return res?.data;
 };
+
+
