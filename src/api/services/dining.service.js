@@ -11,15 +11,52 @@ export const getCategoryById = async (id) => {
 };
 
 export const createCategory = async (payload) => {
-  const res = await axiosClient.post("/admin/dining/categories", payload);
+  const formData = new FormData();
+
+  formData.append("name", payload.name);
+  if (payload.description) formData.append("description", payload.description);
+
+  if (payload.sortOrder !== undefined)
+    formData.append("sortOrder", payload.sortOrder);
+
+  if (payload.image instanceof File) {
+    formData.append("image", payload.image);
+  }
+
+  const res = await axiosClient.post("/admin/dining/categories", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
   return res?.data?.data;
 };
 
 export const updateCategory = async ({ id, payload }) => {
+  const formData = new FormData();
+
+  if (payload.name) formData.append("name", payload.name);
+
+  if (payload.description !== undefined)
+    formData.append("description", payload.description);
+
+  if (payload.sortOrder !== undefined)
+    formData.append("sortOrder", payload.sortOrder);
+
+  if (payload.image instanceof File) {
+    formData.append("image", payload.image);
+  }
+
   const res = await axiosClient.patch(
     `/admin/dining/categories/${id}`,
-    payload,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    },
   );
+
   return res?.data?.data;
 };
 
@@ -52,5 +89,3 @@ export const deleteMenuItem = async (id) => {
   const res = await axiosClient.delete(`/admin/dining/menu/${id}`);
   return res?.data;
 };
-
-
