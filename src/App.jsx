@@ -19,28 +19,50 @@ import Stock from "./Pages/Stock";
 import DailyRoster from "./Pages/DailyRoster";
 
 const ADMIN_LOGIN = import.meta.env.VITE_ADMIN_LOGIN;
+
 const AdminProtectedRoute = ({ children }) => {
-  const [isAuthorized, setIsAuthorized] = useState(null);
+  // States: 'idle' | 'loading' | 'authorized' | 'unauthorized'
+  const [authStatus, setAuthStatus] = useState("loading");
 
   useEffect(() => {
+    // 1. Pehle hi check kar chuke hain toh dobara API hit na karein
+    const isVerified = sessionStorage.getItem("admin_verified");
+    if (isVerified === "true") {
+      setAuthStatus("authorized");
+      return;
+    }
+
     const checkAuth = async () => {
       try {
         await axiosClient.get("/admin/me");
-        setIsAuthorized(true);
+        sessionStorage.setItem("admin_verified", "true");
+        setAuthStatus("authorized");
       } catch (err) {
-        setIsAuthorized(false);
+        console.error("Auth failed");
+        setAuthStatus("unauthorized");
+        // Loop rokne ke liye mark karein ki check ho gaya
+        sessionStorage.setItem("admin_verified", "false"); 
       }
     };
 
     checkAuth();
   }, []);
 
-  if (isAuthorized === null) {
-    return null;
+  // 2. Loading State: Jab tak API result na aaye
+  if (authStatus === "loading") {
+    return (
+      <div className="flex items-center justify-center h-screen bg-white">
+        <div className="w-10 h-10 border-4 border-t-[#C4A15A] border-gray-200 rounded-full animate-spin"></div>
+      </div>
+    );
   }
 
-  if (!isAuthorized) {
-    window.location.href = ADMIN_LOGIN;
+  // 3. Unauthorized State: Loop se bachne ke liye direct redirection
+  if (authStatus === "unauthorized") {
+    // Agar current URL pehle se hi login page hai toh redirect na karein (Loop protection)
+    if (window.location.href !== ADMIN_LOGIN) {
+      window.location.href = ADMIN_LOGIN;
+    }
     return null;
   }
 

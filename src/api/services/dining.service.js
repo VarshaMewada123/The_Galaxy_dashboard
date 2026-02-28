@@ -10,16 +10,19 @@ export const getCategoryById = async (id) => {
   return res?.data?.data;
 };
 
-export const createCategory = async (payload) => {
-  const res = await axiosClient.post("/admin/dining/categories", payload);
+export const createCategory = async (formData) => {
+  // formData pehle se hi component mein ban chuka hai
+  const res = await axiosClient.post("/admin/dining/categories", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return res?.data?.data;
 };
 
 export const updateCategory = async ({ id, payload }) => {
-  const res = await axiosClient.patch(
-    `/admin/dining/categories/${id}`,
-    payload,
-  );
+  // payload yahan par formData hai
+  const res = await axiosClient.patch(`/admin/dining/categories/${id}`, payload, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return res?.data?.data;
 };
 
@@ -52,5 +55,3 @@ export const deleteMenuItem = async (id) => {
   const res = await axiosClient.delete(`/admin/dining/menu/${id}`);
   return res?.data;
 };
-
-
