@@ -10,53 +10,19 @@ export const getCategoryById = async (id) => {
   return res?.data?.data;
 };
 
-export const createCategory = async (payload) => {
-  const formData = new FormData();
-
-  formData.append("name", payload.name);
-  if (payload.description) formData.append("description", payload.description);
-
-  if (payload.sortOrder !== undefined)
-    formData.append("sortOrder", payload.sortOrder);
-
-  if (payload.image instanceof File) {
-    formData.append("image", payload.image);
-  }
-
+export const createCategory = async (formData) => {
+  // formData pehle se hi component mein ban chuka hai
   const res = await axiosClient.post("/admin/dining/categories", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
+    headers: { "Content-Type": "multipart/form-data" },
   });
-
   return res?.data?.data;
 };
 
 export const updateCategory = async ({ id, payload }) => {
-  const formData = new FormData();
-
-  if (payload.name) formData.append("name", payload.name);
-
-  if (payload.description !== undefined)
-    formData.append("description", payload.description);
-
-  if (payload.sortOrder !== undefined)
-    formData.append("sortOrder", payload.sortOrder);
-
-  if (payload.image instanceof File) {
-    formData.append("image", payload.image);
-  }
-
-  const res = await axiosClient.patch(
-    `/admin/dining/categories/${id}`,
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    },
-  );
-
+  // payload yahan par formData hai
+  const res = await axiosClient.patch(`/admin/dining/categories/${id}`, payload, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return res?.data?.data;
 };
 
