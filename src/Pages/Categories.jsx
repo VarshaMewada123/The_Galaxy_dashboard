@@ -1,297 +1,97 @@
-// // import { useState } from "react";
-// // import { motion, AnimatePresence } from "framer-motion";
-// // import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-// // import {
-// //   Plus,
-// //   Pencil,
-// //   Trash2,
-// //   UtensilsCrossed,
-// //   X,
-// //   Loader2,
-// //   Sparkles,
-// //   ChefHat,
-// //   LayoutGrid,
-// // } from "lucide-react";
-// // import {
-// //   getCategories,
-// //   createCategory,
-// //   updateCategory,
-// //   deleteCategory,
-// // } from "@/api/services/dining.service";
-
-// // export default function Categories() {
-// //   const queryClient = useQueryClient();
-// //   const [name, setName] = useState("");
-// //   const [editing, setEditing] = useState(null);
-
-// //   const { data: categories = [], isLoading } = useQuery({
-// //     queryKey: ["categories"],
-// //     queryFn: getCategories,
-// //     staleTime: 1000 * 60 * 5,
-// //   });
-
-// //   const createMutation = useMutation({
-// //     mutationFn: createCategory,
-// //     onSuccess: () => {
-// //       queryClient.invalidateQueries(["categories"]);
-// //       setName("");
-// //     },
-// //   });
-
-// //   const updateMutation = useMutation({
-// //     mutationFn: updateCategory,
-// //     onSuccess: () => {
-// //       queryClient.invalidateQueries(["categories"]);
-// //       setEditing(null);
-// //       setName("");
-// //     },
-// //   });
-
-// //   const deleteMutation = useMutation({
-// //     mutationFn: deleteCategory,
-// //     onSuccess: () => queryClient.invalidateQueries(["categories"]),
-// //   });
-
-// //   const handleSubmit = (e) => {
-// //     e.preventDefault();
-// //     if (!name.trim()) return;
-// //     editing
-// //       ? updateMutation.mutate({ id: editing, payload: { name } })
-// //       : createMutation.mutate({ name });
-// //   };
-
-// //   if (isLoading) {
-// //     return (
-// //       <div className="flex flex-col h-screen items-center justify-center bg-[#FDFDFD]">
-// //         <div className="relative mb-4">
-// //           <Loader2 className="w-10 h-10 animate-spin text-[#C5A059]" />
-// //           <ChefHat className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-[#C5A059]" />
-// //         </div>
-// //         <p className="text-[#C5A059] font-medium tracking-[0.2em] uppercase text-[10px] animate-pulse">
-// //           Setting the Table
-// //         </p>
-// //       </div>
-// //     );
-// //   }
-
-// //   return (
-// //     <div className="min-h-screen bg-[#F8F8F8] text-[#2D2D2D] selection:bg-[#C5A059]/20 font-sans">
-// //       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 lg:py-12">
-// //         <header className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
-// //           <motion.div
-// //             initial={{ opacity: 0, x: -20 }}
-// //             animate={{ opacity: 1, x: 0 }}
-// //           >
-// //             <div className="flex items-center gap-2 mb-1">
-// //               <span className="h-[2px] w-6 bg-[#C5A059]" />
-// //               <span className="text-[9px] uppercase tracking-[0.4em] font-black text-[#C5A059]">
-// //                 Cuisine Architecture
-// //               </span>
-// //             </div>
-// //             <h1 className="text-4xl font-light tracking-tight text-slate-900">
-// //               Menu{" "}
-// //               <span className="font-serif italic text-[#C5A059] font-medium">
-// //                 Categories
-// //               </span>
-// //             </h1>
-// //           </motion.div>
-
-// //           <div className="inline-flex items-center bg-white border border-slate-200 px-4 py-2 rounded-xl shadow-sm">
-// //             <LayoutGrid size={14} className="text-[#C5A059] mr-2" />
-// //             <p className="text-slate-500 text-[10px] font-bold tracking-widest uppercase">
-// //               Live Sections:{" "}
-// //               <span className="text-slate-900 ml-1">{categories.length}</span>
-// //             </p>
-// //           </div>
-// //         </header>
-
-// //         <motion.div
-// //           initial={{ opacity: 0, y: 15 }}
-// //           animate={{ opacity: 1, y: 0 }}
-// //           className="max-w-2xl mx-auto mb-12"
-// //         >
-// //           <form onSubmit={handleSubmit} className="relative">
-// //             <div className="flex flex-col sm:flex-row gap-2 bg-white p-2 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.04)] border border-slate-200">
-// //               <div className="relative flex-1 flex items-center pl-4">
-// //                 <UtensilsCrossed className="text-slate-300 w-4 h-4 mr-3" />
-// //                 <input
-// //                   value={name}
-// //                   onChange={(e) => setName(e.target.value)}
-// //                   placeholder="Enter category name..."
-// //                   className="w-full bg-transparent py-3 outline-none text-slate-700 font-medium text-sm placeholder:text-slate-300"
-// //                 />
-// //               </div>
-
-// //               <div className="flex gap-1">
-// //                 {editing && (
-// //                   <button
-// //                     type="button"
-// //                     onClick={() => {
-// //                       setEditing(null);
-// //                       setName("");
-// //                     }}
-// //                     className="px-3 text-slate-400 hover:text-red-500 transition-colors"
-// //                   >
-// //                     <X size={18} />
-// //                   </button>
-// //                 )}
-// //                 <button
-// //                   type="submit"
-// //                   disabled={
-// //                     createMutation.isPending || updateMutation.isPending
-// //                   }
-// //                   className="whitespace-nowrap flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#C5A059] text-white hover:bg-[#2D2D2D] transition-all duration-300 shadow-md disabled:opacity-50 active:scale-95"
-// //                 >
-// //                   {createMutation.isPending || updateMutation.isPending ? (
-// //                     <Loader2 className="w-4 h-4 animate-spin" />
-// //                   ) : (
-// //                     <>
-// //                       <span className="text-[11px] font-bold tracking-widest uppercase">
-// //                         {editing ? "Save Changes" : "Add Category"}
-// //                       </span>
-// //                       {!editing && <Plus size={14} />}
-// //                     </>
-// //                   )}
-// //                 </button>
-// //               </div>
-// //             </div>
-// //           </form>
-// //         </motion.div>
-
-// //         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-// //           <AnimatePresence mode="popLayout">
-// //             {categories.map((cat, index) => (
-// //               <motion.div
-// //                 key={cat._id}
-// //                 layout
-// //                 initial={{ opacity: 0, scale: 0.9 }}
-// //                 animate={{ opacity: 1, scale: 1 }}
-// //                 exit={{ opacity: 0, scale: 0.9 }}
-// //                 className="group bg-white border border-slate-200/60 rounded-2xl p-5 hover:border-[#C5A059]/40 hover:shadow-xl hover:shadow-[#C5A059]/5 transition-all duration-300 relative overflow-hidden"
-// //               >
-// //                 <div className="absolute top-0 left-0 w-1 h-0 group-hover:h-full bg-[#C5A059] transition-all duration-300" />
-
-// //                 <div className="flex flex-col h-full">
-// //                   <div className="flex justify-between items-start mb-4">
-// //                     <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center group-hover:bg-[#C5A059] transition-colors duration-300">
-// //                       <Sparkles className="w-3.5 h-3.5 text-slate-300 group-hover:text-white" />
-// //                     </div>
-// //                     <span className="text-[10px] font-black text-slate-200 group-hover:text-[#C5A059]/30 tracking-tighter">
-// //                       #{String(index + 1).padStart(2, "0")}
-// //                     </span>
-// //                   </div>
-
-// //                   <h3 className="text-lg font-semibold text-slate-800 mb-6 line-clamp-1 group-hover:translate-x-1 transition-transform">
-// //                     {cat.name}
-// //                   </h3>
-
-// //                   <div className="flex items-center gap-2 mt-auto pt-4 border-t border-slate-50">
-// //                     <button
-// //                       onClick={() => {
-// //                         setEditing(cat._id);
-// //                         setName(cat.name);
-// //                         window.scrollTo({ top: 0, behavior: "smooth" });
-// //                       }}
-// //                       className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-slate-50 text-slate-500 hover:bg-[#C5A059] hover:text-white rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all"
-// //                     >
-// //                       <Pencil size={12} /> Edit
-// //                     </button>
-// //                     <button
-// //                       onClick={() => {
-// //                         if (confirm("Delete this category?"))
-// //                           deleteMutation.mutate(cat._id);
-// //                       }}
-// //                       className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-// //                     >
-// //                       <Trash2 size={14} />
-// //                     </button>
-// //                   </div>
-// //                 </div>
-// //               </motion.div>
-// //             ))}
-// //           </AnimatePresence>
-// //         </div>
-// //         {categories.length === 0 && !isLoading && (
-// //           <motion.div
-// //             initial={{ opacity: 0 }}
-// //             animate={{ opacity: 1 }}
-// //             className="flex flex-col items-center justify-center py-32 border-2 border-dashed border-slate-200 rounded-[2rem] bg-white/50"
-// //           >
-// //             <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4 border border-slate-100">
-// //               <ChefHat size={28} className="text-slate-200" />
-// //             </div>
-// //             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest">
-// //               No Categories Found
-// //             </h3>
-// //             <p className="text-slate-300 text-xs mt-1">
-// //               Ready to create your first culinary masterpiece?
-// //             </p>
-// //           </motion.div>
-// //         )}
-// //       </div>
-// //     </div>
-// //   );
-// // }
-
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useCallback, useMemo, useEffect } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, UtensilsCrossed, X, Loader2, ChefHat, LayoutGrid, Image as ImageIcon } from "lucide-react";
-import { getCategories, createCategory, updateCategory, deleteCategory } from "@/api/services/dining.service";
+import toast, { Toaster } from "react-hot-toast";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  UtensilsCrossed,
+  X,
+  Loader2,
+  ChefHat,
+  LayoutGrid,
+  Image as ImageIcon,
+  ArrowLeft,
+  ChevronRight,
+} from "lucide-react";
+import {
+  getCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+} from "@/api/services/dining.service";
 
 export default function Categories() {
   const queryClient = useQueryClient();
+  const shouldReduceMotion = useReducedMotion();
   const [name, setName] = useState("");
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
   const [editing, setEditing] = useState(null);
-
-  // ================= QUERY =================
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: getCategories,
     staleTime: 1000 * 60 * 5,
   });
+  useEffect(() => {
+    return () => {
+      if (preview && preview.startsWith("blob:")) {
+        URL.revokeObjectURL(preview);
+      }
+    };
+  }, [preview]);
 
-  // ================= MUTATIONS =================
+  const resetForm = useCallback(() => {
+    setName("");
+    setImage(null);
+    if (preview && preview.startsWith("blob:")) {
+      URL.revokeObjectURL(preview);
+    }
+    setPreview(null);
+    setEditing(null);
+  }, [preview]);
   const createMutation = useMutation({
     mutationFn: createCategory,
-    onSuccess: () => { 
-      queryClient.invalidateQueries(["categories"]); 
-      resetForm(); 
+    onSuccess: () => {
+      queryClient.invalidateQueries(["categories"]);
+      toast.success("Category added to menu");
+      resetForm();
     },
     onError: (error) => {
-      alert(error.response?.data?.message || "Something went wrong");
-    }
+      toast.error(error.response?.data?.message || "Failed to create category");
+    },
   });
 
   const updateMutation = useMutation({
     mutationFn: updateCategory,
-    onSuccess: () => { 
-      queryClient.invalidateQueries(["categories"]); 
-      resetForm(); 
+    onSuccess: () => {
+      queryClient.invalidateQueries(["categories"]);
+      toast.success("Changes saved successfully");
+      resetForm();
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || "Failed to update category");
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteCategory,
-    onSuccess: () => queryClient.invalidateQueries(["categories"]),
+    onMutate: () =>
+      toast.loading("Removing category...", { id: "delete-toast" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["categories"]);
+      toast.success("Category removed", { id: "delete-toast" });
+    },
+    onError: () => {
+      toast.error("Could not delete category", { id: "delete-toast" });
+    },
   });
-
-  const resetForm = () => {
-    setName("");
-    setImage(null);
-    setPreview(null);
-    setEditing(null);
-    // Cleanup blob URL memory
-    if (preview && preview.startsWith('blob:')) {
-      URL.revokeObjectURL(preview);
-    }
-  };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (preview && preview.startsWith("blob:")) URL.revokeObjectURL(preview);
       setImage(file);
       setPreview(URL.createObjectURL(file));
     }
@@ -299,17 +99,13 @@ export default function Categories() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim()) return toast.error("Please enter a category name");
 
-    // IMPORTANT: Use FormData for file uploads
     const formData = new FormData();
     formData.append("name", name);
-    formData.append("isActive", "true"); // Default value to prevent undefined
-    formData.append("sortOrder", "0");   // Default value
-    
-    if (image) {
-      formData.append("image", image); // Field name must match upload.single("image")
-    }
+    formData.append("isActive", "true");
+    formData.append("sortOrder", "0");
+    if (image) formData.append("image", image);
 
     if (editing) {
       updateMutation.mutate({ id: editing, payload: formData });
@@ -318,85 +114,278 @@ export default function Categories() {
     }
   };
 
+  const isMutating = createMutation.isPending || updateMutation.isPending;
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
+  };
+
+  const itemVariants = useMemo(
+    () => ({
+      initial: { opacity: 0, y: shouldReduceMotion ? 0 : 10 },
+      animate: { opacity: 1, y: 0 },
+      exit: { opacity: 0, scale: 0.95 },
+    }),
+    [shouldReduceMotion],
+  );
+
   if (isLoading) {
     return (
-      <div className="flex flex-col h-screen items-center justify-center bg-[#FDFDFD]">
-        <div className="relative mb-4">
-          <Loader2 className="w-10 h-10 animate-spin text-[#C5A059]" />
-          <ChefHat className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-[#C5A059]" />
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-white z-50">
+        <div className="relative flex items-center justify-center">
+          <Loader2 className="w-12 h-12 animate-spin text-[#C5A059] opacity-20" />
+          <ChefHat className="absolute w-6 h-6 text-[#C5A059]" />
         </div>
-        <p className="text-[#C5A059] font-medium tracking-[0.2em] uppercase text-[10px] animate-pulse">Setting the Table</p>
+        <p className="mt-4 text-[#C5A059] font-medium tracking-[0.3em] uppercase text-[10px]">
+          Loading Kitchen
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F8F8] text-[#2D2D2D] selection:bg-[#C5A059]/20 font-sans">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 lg:py-12">
-        
-        {/* Header Section */}
-        <header className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="h-[2px] w-6 bg-[#C5A059]" />
-              <span className="text-[9px] uppercase tracking-[0.4em] font-black text-[#C5A059]">Cuisine Architecture</span>
+    <div className="min-h-screen bg-[#FFFFFF] text-[#2D2D2D] selection:bg-[#C5A059]/20 pb-20 overflow-x-hidden">
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          className:
+            "text-sm font-sans font-medium rounded-2xl shadow-2xl border border-slate-100",
+          duration: 4000,
+          style: { background: "#FFF", color: "#2D2D2D", padding: "16px 24px" },
+        }}
+      />
+
+      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-12">
+        <nav className="mb-8 lg:mb-12">
+          <button
+            onClick={() => window.history.back()}
+            className="group flex items-center gap-3 text-slate-400 hover:text-[#C5A059] transition-all"
+          >
+            <div className="p-2 rounded-full bg-slate-100 group-hover:bg-[#C5A059]/10 transition-colors">
+              <ArrowLeft size={18} />
             </div>
-            <h1 className="text-4xl font-light tracking-tight text-slate-900">Menu <span className="font-serif italic text-[#C5A059] font-medium">Categories</span></h1>
-          </motion.div>
-          <div className="inline-flex items-center bg-white border border-slate-200 px-4 py-2 rounded-xl shadow-sm">
-            <LayoutGrid size={14} className="text-[#C5A059] mr-2" />
-            <p className="text-slate-500 text-[10px] font-bold tracking-widest uppercase">Live Sections: <span className="text-slate-900 ml-1">{categories.length}</span></p>
+            <span className="text-[10px] uppercase tracking-widest font-bold"></span>
+          </button>
+        </nav>
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 lg:mb-16">
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="h-[2px] w-8 bg-[#C5A059]" />
+              <span className="text-[10px] uppercase tracking-[0.3em] text-[#C5A059] font-bold">
+                Culinary Collection
+              </span>
+            </div>
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-light tracking-tight text-slate-900">
+              Menu{" "}
+              <span className="text-[#C5A059] font-serif italic">
+                Categories
+              </span>
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-4 bg-white border border-slate-100 p-4 rounded-2xl shadow-sm md:min-w-[200px]">
+            <div className="p-2.5 bg-[#C5A059]/10 rounded-xl">
+              <LayoutGrid size={22} className="text-[#C5A059]" />
+            </div>
+            <div>
+              <span className="block text-slate-400 text-[9px] font-bold tracking-widest uppercase mb-0.5">
+                Total Sections
+              </span>
+              <span className="text-slate-900 font-bold text-2xl tabular-nums leading-none">
+                {categories.length}
+              </span>
+            </div>
           </div>
         </header>
+        <section className="max-w-4xl mx-auto mb-16 lg:mb-24">
+          <form
+            onSubmit={handleSubmit}
+            className="bg-white p-2 rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100"
+          >
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-col lg:flex-row gap-2">
+                <div className="flex-1 flex items-center px-6 py-4 bg-slate-50 rounded-[1.5rem] focus-within:ring-2 ring-[#C5A059]/20 focus-within:bg-white transition-all">
+                  <UtensilsCrossed className="text-[#C5A059]/40 w-5 h-5 mr-4" />
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="E.g. Signature Mains"
+                    className="w-full bg-transparent outline-none text-slate-700 font-medium placeholder:text-slate-300"
+                  />
+                </div>
+                <div className="flex flex-row gap-2 h-[60px] lg:h-auto">
+                  <label className="flex-1 lg:flex-none cursor-pointer flex items-center justify-center gap-3 px-6 bg-white border border-slate-100 rounded-[1.5rem] hover:border-[#C5A059] hover:bg-[#C5A059]/5 transition-all group active:scale-95">
+                    <ImageIcon
+                      size={20}
+                      className="text-slate-400 group-hover:text-[#C5A059]"
+                    />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                      Image
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageChange}
+                    />
+                  </label>
 
-        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl mx-auto mb-12">
-          <form onSubmit={handleSubmit} className="bg-white p-4 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.04)] border border-slate-200 flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1 flex items-center pl-4 bg-slate-50 rounded-xl border border-slate-100">
-                <UtensilsCrossed className="text-slate-300 w-4 h-4 mr-3" />
-                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter category name..." className="w-full bg-transparent py-3 outline-none text-slate-700 font-medium text-sm placeholder:text-slate-300" />
+                  <button
+                    type="submit"
+                    disabled={isMutating}
+                    className="flex-[2] lg:flex-none whitespace-nowrap flex items-center justify-center gap-3 px-8 rounded-[1.5rem] bg-[#C5A059] text-white hover:bg-[#C5A059] transition-all duration-300 shadow-lg disabled:opacity-50 active:scale-95 outline-none"
+                  >
+                    {isMutating ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <>
+                        <span className="text-xs font-bold tracking-widest uppercase">
+                          {editing ? "Save Changes" : "Create Category"}
+                        </span>
+                        {editing ? (
+                          <ChevronRight size={16} />
+                        ) : (
+                          <Plus size={16} />
+                        )}
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
-              <label className="cursor-pointer flex items-center justify-center gap-2 px-4 py-3 bg-slate-50 border border-dashed border-slate-300 rounded-xl hover:border-[#C5A059] transition-colors group">
-                <ImageIcon size={16} className="text-slate-400 group-hover:text-[#C5A059]" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Photo</span>
-                <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-              </label>
-            </div>
-            {preview && (
-              <div className="relative w-full h-32 rounded-xl overflow-hidden border-2 border-[#C5A059]/20">
-                <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-                <button type="button" onClick={() => { setImage(null); setPreview(null); }} className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"><X size={14} /></button>
-              </div>
-            )}
-            <div className="flex justify-end gap-2 border-t border-slate-50 pt-2">
-              {editing && <button type="button" onClick={resetForm} className="px-4 py-2 text-slate-400 hover:text-red-500 text-[11px] font-bold uppercase tracking-widest transition-colors">Cancel</button>}
-              <button type="submit" disabled={createMutation.isPending || updateMutation.isPending} className="whitespace-nowrap flex items-center justify-center gap-2 px-8 py-3 rounded-xl bg-[#C5A059] text-white hover:bg-[#2D2D2D] transition-all duration-300 shadow-md disabled:opacity-50 active:scale-95">
-                {createMutation.isPending || updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <><span className="text-[11px] font-bold tracking-widest uppercase">{editing ? "Update Category" : "Add Category"}</span>{!editing && <Plus size={14} />}</>}
-              </button>
+              <AnimatePresence>
+                {preview && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="p-2">
+                      <div className="relative aspect-[21/9] w-full rounded-2xl overflow-hidden bg-slate-100 group">
+                        <img
+                          src={preview}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
+
+                        <div className="absolute top-4 right-4 flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setImage(null);
+                              setPreview(null);
+                            }}
+                            className="p-3 bg-white/90 backdrop-blur text-red-500 rounded-full hover:bg-red-500 hover:text-white transition-all shadow-lg active:scale-90"
+                          >
+                            <X size={20} />
+                          </button>
+                        </div>
+
+                        {editing && (
+                          <div className="absolute bottom-4 left-4">
+                            <button
+                              type="button"
+                              onClick={resetForm}
+                              className="px-6 py-2 bg-white rounded-full text-[10px] font-bold uppercase tracking-widest text-red-500 hover:bg-red-50 transition-all shadow-md"
+                            >
+                              Cancel Edit
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </form>
-        </motion.div>
-
-        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        </section>
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8"
+        >
           <AnimatePresence mode="popLayout">
             {categories.map((cat, index) => (
-              <motion.div key={cat._id} layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="group bg-white border border-slate-200/60 rounded-2xl overflow-hidden hover:border-[#C5A059]/40 hover:shadow-xl transition-all duration-300 relative">
-                <div className="relative h-40 w-full overflow-hidden bg-slate-100">
-                  {cat.image?.url ? <img src={cat.image.url} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" /> : <div className="w-full h-full flex items-center justify-center"><ChefHat className="w-10 h-10 text-slate-200" /></div>}
-                  <div className="absolute top-3 left-3 flex items-center gap-1 bg-black/20 backdrop-blur-md px-2 py-1 rounded-md"><span className="text-[9px] font-black text-white tracking-tighter">#{String(index + 1).padStart(2, "0")}</span></div>
+              <motion.div
+                key={cat._id}
+                layout={!shouldReduceMotion}
+                variants={itemVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="group flex flex-col bg-white border border-slate-100 rounded-[2.5rem] overflow-hidden hover:shadow-2xl hover:shadow-slate-200 transition-all duration-500"
+              >
+                <div className="relative aspect-[5/4] w-full overflow-hidden bg-slate-50">
+                  {cat.image?.url ? (
+                    <img
+                      src={cat.image.url}
+                      alt={cat.name}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ChefHat className="w-12 h-12 text-slate-200" />
+                    </div>
+                  )}
+                  <div className="absolute top-4 left-4">
+                    <span className="bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-[#C5A059] border border-white/50 shadow-sm">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                  </div>
                 </div>
-                <div className="p-5">
-                  <h3 className="text-lg font-semibold text-slate-800 mb-6 line-clamp-1 group-hover:translate-x-1 transition-transform">{cat.name}</h3>
-                  <div className="flex items-center gap-2 mt-auto pt-4 border-t border-slate-50">
-                    <button onClick={() => { setEditing(cat._id); setName(cat.name); setPreview(cat.image?.url); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-slate-50 text-slate-500 hover:bg-[#C5A059] hover:text-white rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all"><Pencil size={12} /> Edit</button>
-                    <button onClick={() => { if (confirm("Delete?")) deleteMutation.mutate(cat._id); }} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"><Trash2 size={14} /></button>
+                <div className="p-6 lg:p-8 flex flex-col flex-1">
+                  <h3 className="text-xl font-medium text-slate-800 mb-6 line-clamp-1">
+                    {cat.name}
+                  </h3>
+
+                  <div className="mt-auto flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setEditing(cat._id);
+                        setName(cat.name);
+                        setPreview(cat.image?.url);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-slate-50 text-slate-500 hover:bg-[#C5A059] hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95"
+                    >
+                      <Pencil size={14} /> Edit
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (confirm(`Delete "${cat.name}" category?`)) {
+                          deleteMutation.mutate(cat._id);
+                        }
+                      }}
+                      className="p-3.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors active:scale-95"
+                      aria-label="Delete category"
+                    >
+                      <Trash2 size={18} />
+                    </button>
                   </div>
                 </div>
               </motion.div>
             ))}
           </AnimatePresence>
-        </div>
-      </div>
+        </motion.div>
+        {categories.length === 0 && !isLoading && (
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
+              <ChefHat className="text-slate-200 w-10 h-10" />
+            </div>
+            <h3 className="text-xl font-medium text-slate-400 mb-2">
+              The Menu is Empty
+            </h3>
+            <p className="text-slate-300 text-sm max-w-xs mx-auto font-sans">
+              Click the button above to add your first category.
+            </p>
+          </div>
+        )}
+      </main>
     </div>
   );
 }

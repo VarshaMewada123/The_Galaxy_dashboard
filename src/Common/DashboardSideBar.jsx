@@ -57,7 +57,7 @@ export default function Sidebar() {
     },
     {
       name: "Live Orders",
-      path: "/admin/live-orders",
+      path: "/admin/orders",
       icon: <ShoppingCart size={18} />,
     },
 
@@ -67,13 +67,13 @@ export default function Sidebar() {
       icon: <Users size={18} />,
     },
     {
-      name: "Inventory/Stock",
-      path: "/admin/Stock",
+      name: "Daily Roster",
+      path: "/admin/daily-roster",
       icon: <Clock size={18} />,
     },
     {
-      name: "Daily Roster",
-      path: "/admin/daily-roster",
+      name: "Add Combo",
+      path: "/admin/combos",
       icon: <Clock size={18} />,
     },
   ];

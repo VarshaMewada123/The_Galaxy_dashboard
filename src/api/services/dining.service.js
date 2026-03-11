@@ -11,7 +11,6 @@ export const getCategoryById = async (id) => {
 };
 
 export const createCategory = async (formData) => {
-  // formData pehle se hi component mein ban chuka hai
   const res = await axiosClient.post("/admin/dining/categories", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
@@ -19,10 +18,13 @@ export const createCategory = async (formData) => {
 };
 
 export const updateCategory = async ({ id, payload }) => {
-  // payload yahan par formData hai
-  const res = await axiosClient.patch(`/admin/dining/categories/${id}`, payload, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  const res = await axiosClient.patch(
+    `/admin/dining/categories/${id}`,
+    payload,
+    {
+      headers: { "Content-Type": "multipart/form-data" },
+    },
+  );
   return res?.data?.data;
 };
 

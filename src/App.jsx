@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axiosClient from "./api/axiosClient";
-
 import MainLayout from "./Layout/DashboardLayout";
 import Dashboard from "./Pages/Dashboard";
 import Rooms from "./Pages/Rooms";
@@ -14,18 +13,16 @@ import Categories from "./Pages/Categories";
 import AddItem from "./Pages/AddItem";
 import LiveOrders from "./Pages/LiveOrders";
 import KitchenStaff from "./Pages/KitchenStaff";
-import Inventory from "./Pages/Inventory";
-import Stock from "./Pages/Stock";
 import DailyRoster from "./Pages/DailyRoster";
+import ComboPage from "./Pages/ComboPage";
+import AdminOrdersPage from "./Pages/AdminOrdersPage";
 
 const ADMIN_LOGIN = import.meta.env.VITE_ADMIN_LOGIN;
 
 const AdminProtectedRoute = ({ children }) => {
-  // States: 'idle' | 'loading' | 'authorized' | 'unauthorized'
   const [authStatus, setAuthStatus] = useState("loading");
 
   useEffect(() => {
-    // 1. Pehle hi check kar chuke hain toh dobara API hit na karein
     const isVerified = sessionStorage.getItem("admin_verified");
     if (isVerified === "true") {
       setAuthStatus("authorized");
@@ -40,15 +37,14 @@ const AdminProtectedRoute = ({ children }) => {
       } catch (err) {
         console.error("Auth failed");
         setAuthStatus("unauthorized");
-        // Loop rokne ke liye mark karein ki check ho gaya
-        sessionStorage.setItem("admin_verified", "false"); 
+
+        sessionStorage.setItem("admin_verified", "false");
       }
     };
 
     checkAuth();
   }, []);
 
-  // 2. Loading State: Jab tak API result na aaye
   if (authStatus === "loading") {
     return (
       <div className="flex items-center justify-center h-screen bg-white">
@@ -57,9 +53,7 @@ const AdminProtectedRoute = ({ children }) => {
     );
   }
 
-  // 3. Unauthorized State: Loop se bachne ke liye direct redirection
   if (authStatus === "unauthorized") {
-    // Agar current URL pehle se hi login page hai toh redirect na karein (Loop protection)
     if (window.location.href !== ADMIN_LOGIN) {
       window.location.href = ADMIN_LOGIN;
     }
@@ -95,9 +89,9 @@ export default function App() {
           <Route path="add-item" element={<AddItem />} />
           <Route path="live-orders" element={<LiveOrders />} />
           <Route path="kitchen-staff" element={<KitchenStaff />} />
-          <Route path="inventory" element={<Inventory />} />
-          <Route path="stock" element={<Stock />} />
           <Route path="daily-roster" element={<DailyRoster />} />
+          <Route path="orders" element={<AdminOrdersPage />} />
+          <Route path="combos" element={<ComboPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />

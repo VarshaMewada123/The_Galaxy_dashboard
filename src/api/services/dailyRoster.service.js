@@ -1,12 +1,12 @@
 import api from "@/api/axiosClient";
 
 export const upsertDailyRoster = async (payload) => {
-  const { data } = await api.post("/admin/dining/dailyroster", payload);
+  const { data } = await api.post("/admin/roster/dailyroster", payload);
   return data.data;
 };
 
 export const getRosterByDate = async (date) => {
-  const { data } = await api.get("/admin/dining/getrosterbydate", {
+  const { data } = await api.get("/admin/roster/getrosterbydate", {
     params: { date },
   });
 
@@ -14,10 +14,9 @@ export const getRosterByDate = async (date) => {
 };
 
 export const getRosterRange = async ({ start, end }) => {
-  const { data } = await api.get("/admin/dining/range", {
+  const { data } = await api.get("/admin/roster/range", {
     params: { start, end },
   });
 
   return data.data;
 };
-
