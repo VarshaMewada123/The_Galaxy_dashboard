@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -5,14 +6,12 @@ import axiosClient from "@/api/axiosClient";
 import toast, { Toaster } from "react-hot-toast";
 import {
   Loader2,
-  Upload,
   ChevronLeft,
   ImagePlus,
   X,
   Utensils,
   IndianRupee,
   Clock,
-  Plus,
   ArrowLeft,
 } from "lucide-react";
 
@@ -29,6 +28,7 @@ export default function AddMenuItem() {
     category: "",
     basePrice: "",
     isVeg: true,
+    isJain: false,
     preparationTime: 15,
     spiceLevel: "MEDIUM",
     description: "",
@@ -115,6 +115,7 @@ export default function AddMenuItem() {
             <div className="p-2 rounded-full bg-slate-100 group-hover:bg-[#C5A059]/10 transition-colors">
               <ArrowLeft size={18} />
             </div>
+            <span className="text-sm font-bold uppercase tracking-widest">Back</span>
           </button>
         </nav>
 
@@ -202,31 +203,56 @@ export default function AddMenuItem() {
               </div>
             </div>
 
-            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 grid grid-cols-2 gap-8">
-              <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">
-                  Dietary Preference
-                </p>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="isVeg"
-                    checked={formData.isVeg}
-                    onChange={handleChange}
-                    className="sr-only"
-                  />
-                  <div
-                    className={`w-12 h-6 rounded-full transition-all relative ${formData.isVeg ? "bg-green-500" : "bg-gray-200"}`}
-                  >
-                    <div
-                      className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all ${formData.isVeg ? "translate-x-6" : ""}`}
-                    />
+            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">
+                    Dietary Preference
+                  </p>
+                  <div className="flex flex-wrap gap-6">
+                    <label className="flex items-center gap-3 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        name="isVeg"
+                        checked={formData.isVeg}
+                        onChange={handleChange}
+                        className="sr-only"
+                      />
+                      <div
+                        className={`w-12 h-6 rounded-full transition-all relative ${formData.isVeg ? "bg-green-500" : "bg-gray-200"}`}
+                      >
+                        <div
+                          className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all ${formData.isVeg ? "translate-x-6" : ""}`}
+                        />
+                      </div>
+                      <span className="font-bold text-sm uppercase group-hover:text-[#C4A15A] transition-colors">
+                        {formData.isVeg ? "Veg" : "Non-Veg"}
+                      </span>
+                    </label>
+
+                    <label className="flex items-center gap-3 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        name="isJain"
+                        checked={formData.isJain}
+                        onChange={handleChange}
+                        className="sr-only"
+                      />
+                      <div
+                        className={`w-12 h-6 rounded-full transition-all relative ${formData.isJain ? "bg-yellow-500" : "bg-gray-200"}`}
+                      >
+                        <div
+                          className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all ${formData.isJain ? "translate-x-6" : ""}`}
+                        />
+                      </div>
+                      <span className="font-bold text-sm uppercase group-hover:text-[#C4A15A] transition-colors">
+                        Jain
+                      </span>
+                    </label>
                   </div>
-                  <span className="font-bold text-sm uppercase">
-                    {formData.isVeg ? "Veg" : "Non-Veg"}
-                  </span>
-                </label>
+                </div>
               </div>
+
               <div>
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">
                   Spice Level
@@ -273,7 +299,9 @@ export default function AddMenuItem() {
               </div>
               <div className="grid grid-cols-3 gap-2 mt-4">
                 {previews.map((url, i) => (
-                  <div
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
                     key={i}
                     className="aspect-square rounded-xl overflow-hidden relative group"
                   >
@@ -289,7 +317,7 @@ export default function AddMenuItem() {
                     >
                       <X size={10} />
                     </button>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
