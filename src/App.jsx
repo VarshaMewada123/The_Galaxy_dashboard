@@ -16,6 +16,8 @@ import KitchenStaff from "./Pages/KitchenStaff";
 import DailyRoster from "./Pages/DailyRoster";
 import ComboPage from "./Pages/ComboPage";
 import AdminOrdersPage from "./Pages/AdminOrdersPage";
+import OffersPage from "./Pages/CreateOffer";
+import OffersList from "./Pages/OfferList";
 
 const ADMIN_LOGIN = import.meta.env.VITE_ADMIN_LOGIN;
 
@@ -92,6 +94,8 @@ export default function App() {
           <Route path="daily-roster" element={<DailyRoster />} />
           <Route path="orders" element={<AdminOrdersPage />} />
           <Route path="combos" element={<ComboPage />} />
+                <Route path="offersdining" element={<OffersPage />} />
+                 <Route path="offerslist" element={<OffersList />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />

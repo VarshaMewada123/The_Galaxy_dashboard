@@ -76,6 +76,11 @@ export default function Sidebar() {
       path: "/admin/combos",
       icon: <Clock size={18} />,
     },
+       {
+      name: "Create Offer",
+      path: "/admin/offersdining",
+      icon: <Clock size={18} />,
+    },
   ];
 
   const handleLogout = async () => {
