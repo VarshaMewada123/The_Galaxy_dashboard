@@ -3,22 +3,29 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import axiosClient from "@/api/axiosClient";
 import toast from "react-hot-toast";
-import { Edit2, Trash2, X, Tag, Calendar, Percent } from "lucide-react";
+import { Edit2, Trash2, X, Calendar } from "lucide-react";
 
 export default function OfferManagement() {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [formData, setFormData] = useState({ name: "", discountValue: "", discountType: "PERCENTAGE" });
+
+  const [formData, setFormData] = useState({
+    name: "",
+    discountValue: "",
+    discountType: "PERCENTAGE",
+  });
+
   const [isEditing, setIsEditing] = useState(false);
 
   const fetchOffers = useCallback(async () => {
     try {
       setLoading(true);
       const res = await axiosClient.get("/admin/dining/offers");
-      setOffers(res.data.data);
-    } catch (error) {
+      setOffers(res.data.data || []);
+    } catch {
       toast.error("Failed to load offers");
     } finally {
       setLoading(false);
@@ -30,8 +37,8 @@ export default function OfferManagement() {
       const res = await axiosClient.get(`/admin/dining/offers/${offerId}`);
       setFormData(res.data.data);
       setIsEditing(true);
-    } catch (error) {
-      toast.error("Error fetching offer details");
+    } catch {
+      toast.error("Error fetching offer");
     }
   }, []);
 
@@ -47,13 +54,14 @@ export default function OfferManagement() {
 
   const updateOffer = async (e) => {
     e.preventDefault();
+
     try {
       await axiosClient.put(`/admin/dining/offers/${id}`, formData);
-      toast.success("Offer Updated Successfully");
+      toast.success("Offer updated");
       setIsEditing(false);
-      navigate("/offers");
+      navigate("/admin/dining/offers");
       fetchOffers();
-    } catch (error) {
+    } catch {
       toast.error("Update failed");
     }
   };
@@ -61,167 +69,345 @@ export default function OfferManagement() {
   const deleteOffer = async (offerId) => {
     try {
       await axiosClient.delete(`/admin/dining/offers/${offerId}`);
-      toast.success("Offer Deleted");
+      toast.success("Offer deleted");
       fetchOffers();
-    } catch (error) {
+    } catch {
       toast.error("Delete failed");
     }
   };
 
+  const closeEditor = () => {
+    setIsEditing(false);
+    setFormData({
+      name: "",
+      discountValue: "",
+      discountType: "PERCENTAGE",
+    });
+    navigate("/admin/dining/offers");
+  };
+
   return (
-    <div className="min-h-screen bg-[#F9F9F7] p-4 md:p-8 font-sans text-gray-900">
+    <div className="min-h-screen bg-[#F9F9F7] p-6 text-gray-900">
       <div className="max-w-7xl mx-auto">
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">
-              Promotions <span className="text-[#C5A059]">&</span> Offers
-            </h1>
-            <p className="text-gray-500 mt-1">Manage your store discounts and seasonal campaigns.</p>
-          </div>
+
+        <header className="mb-10">
+          <h1 className="text-3xl font-bold">
+            Promotions <span className="text-[#C5A059]">&</span> Offers
+          </h1>
+          <p className="text-gray-500 mt-1">
+            Manage your store discounts
+          </p>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          <main className={`${isEditing ? "lg:col-span-7" : "lg:col-span-12"} transition-all duration-500`}>
+
+          {/* OFFER LIST */}
+          <main className={`${isEditing ? "lg:col-span-7" : "lg:col-span-12"}`}>
+
             {loading ? (
               <div className="h-64 flex items-center justify-center">
                 <div className="w-8 h-8 border-4 border-[#C5A059] border-t-transparent rounded-full animate-spin" />
               </div>
+            ) : offers.length === 0 ? (
+              <div className="text-center text-gray-400 py-20">
+                No offers created yet
+              </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                <AnimatePresence mode="popLayout">
+              <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <AnimatePresence>
                   {offers.map((offer) => (
-                    <OfferCard 
-                      key={offer._id} 
-                      offer={offer} 
-                      onEdit={(id) => navigate(`/admin/dining/offers/${id}`)} 
-                      onDelete={deleteOffer} 
+                    <OfferCard
+                      key={offer._id}
+                      offer={offer}
+                      onEdit={(id) => navigate(`/admin/dining/offers/${id}`)}
+                      onDelete={deleteOffer}
                     />
                   ))}
                 </AnimatePresence>
               </div>
             )}
+
           </main>
 
+          {/* EDIT PANEL */}
           <AnimatePresence>
             {isEditing && (
               <motion.aside
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: 40 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
+                exit={{ opacity: 0 }}
                 className="lg:col-span-5"
               >
-                <div className="sticky top-8 bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
-                  <div className="bg-[#C5A059] p-4 flex justify-between items-center text-white">
-                    <h2 className="font-semibold text-lg">Edit Offer Details</h2>
-                    <button onClick={() => { setIsEditing(false); navigate("/offers"); }} className="hover:rotate-90 transition-transform">
-                      <X size={20} />
+                <div className="bg-white rounded-2xl shadow-xl border">
+
+                  <div className="bg-[#C5A059] p-4 flex justify-between text-white">
+                    <h2 className="font-semibold">Edit Offer</h2>
+                    <button onClick={closeEditor}>
+                      <X size={18} />
                     </button>
                   </div>
-                  <form onSubmit={updateOffer} className="p-6 space-y-5">
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Offer Name</label>
-                      <input
-                        name="name"
-                        value={formData.name || ""}
-                        onChange={handleChange}
-                        className="w-full bg-gray-50 border-none ring-1 ring-gray-200 focus:ring-2 focus:ring-[#C5A059] rounded-lg p-3 transition-all outline-none"
-                        placeholder="e.g. Summer Sale"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Discount Value</label>
-                      <div className="relative">
-                        <input
-                          name="discountValue"
-                          type="number"
-                          value={formData.discountValue || ""}
-                          onChange={handleChange}
-                          className="w-full bg-gray-50 border-none ring-1 ring-gray-200 focus:ring-2 focus:ring-[#C5A059] rounded-lg p-3 pl-10 transition-all outline-none"
-                          required
-                        />
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                          {formData.discountType === "PERCENTAGE" ? <Percent size={16} /> : <span className="text-sm font-bold">₹</span>}
-                        </div>
-                      </div>
-                    </div>
-                    <button className="w-full bg-[#C5A059] hover:bg-[#b08d4b] text-white font-bold py-4 rounded-lg shadow-lg shadow-tan/20 transition-all active:scale-[0.98]">
+
+                  <form onSubmit={updateOffer} className="p-6 space-y-4">
+
+                    <input
+                      name="name"
+                      value={formData.name || ""}
+                      onChange={handleChange}
+                      placeholder="Offer Name"
+                      className="w-full border p-3 rounded-lg"
+                      required
+                    />
+
+                    <input
+                      name="discountValue"
+                      type="number"
+                      value={formData.discountValue || ""}
+                      onChange={handleChange}
+                      placeholder="Discount"
+                      className="w-full border p-3 rounded-lg"
+                      required
+                    />
+
+                    <button className="w-full bg-[#C5A059] text-white p-3 rounded-lg hover:bg-[#b08d4b]">
                       Save Changes
                     </button>
+
                   </form>
+
                 </div>
               </motion.aside>
             )}
           </AnimatePresence>
+
         </div>
       </div>
     </div>
   );
 }
 
+// function OfferCard({ offer, onEdit, onDelete }) {
+
+//   const items = offer.items || [];
+
+//   return (
+//     <motion.div
+//       layout
+//       initial={{ opacity: 0, y: 15 }}
+//       animate={{ opacity: 1, y: 0 }}
+//       className="bg-white rounded-xl shadow hover:shadow-xl transition overflow-hidden relative"
+//     >
+
+//       {/* Offer Image */}
+//       <div className="aspect-square overflow-hidden bg-gray-100">
+//         <img
+//           src={offer.image?.url}
+//           alt={offer.name}
+//           className="w-full h-full object-cover hover:scale-110 transition duration-500"
+//         />
+//       </div>
+
+//       <div className="p-4 space-y-3">
+
+//         <h3 className="font-bold text-lg">{offer.name}</h3>
+
+//         {/* All Discounted Items */}
+//         <div className="space-y-3">
+
+//           {items.map((item) => (
+//             <div
+//               key={item._id}
+//               className="border rounded-lg p-3 bg-gray-50 relative"
+//             >
+
+//               {item.discountLabel && (
+//                 <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
+//                   {item.discountLabel}
+//                 </div>
+//               )}
+
+//               <div className="font-semibold">
+//                 {item.name}
+//               </div>
+
+//               <div className="flex items-center gap-2 mt-1">
+
+//                 <span className="text-gray-400 line-through text-sm">
+//                   ₹{item.originalPrice}
+//                 </span>
+
+//                 <span className="text-lg font-bold text-black">
+//                   ₹{item.finalPrice}
+//                 </span>
+
+//               </div>
+
+//               {item.savings > 0 && (
+//                 <div className="text-green-600 text-xs font-semibold">
+//                   You saved ₹{item.savings}
+//                 </div>
+//               )}
+
+//             </div>
+//           ))}
+
+//         </div>
+
+//         <div className="flex justify-between text-xs text-gray-500 mt-3">
+
+//           <span className="flex items-center gap-1">
+//             <Calendar size={12} />
+//             {offer.startDate?.slice(0, 10)}
+//           </span>
+
+//           <span>{offer.endDate?.slice(0, 10)}</span>
+
+//         </div>
+
+//         <div className="flex gap-2 mt-3">
+
+//           <button
+//             onClick={() => onEdit(offer._id)}
+//             className="flex-1 text-blue-600 border rounded-lg py-2 flex justify-center hover:bg-blue-50"
+//           >
+//             <Edit2 size={16} />
+//           </button>
+
+//           <button
+//             onClick={() => onDelete(offer._id)}
+//             className="flex-1 text-red-600 border rounded-lg py-2 flex justify-center hover:bg-red-50"
+//           >
+//             <Trash2 size={16} />
+//           </button>
+
+//         </div>
+
+//       </div>
+
+//     </motion.div>
+//   );
+// }
+
+
 function OfferCard({ offer, onEdit, onDelete }) {
-  const isDiscounted = offer.finalPrice < offer.basePrice;
-  const discountPercentage = isDiscounted 
-    ? Math.round(((offer.basePrice - offer.finalPrice) / offer.basePrice) * 100) 
-    : 0;
+
+  const items = offer.items || [];
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      className="group bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-xl transition-all duration-300 relative overflow-hidden"
+      className="bg-white rounded-xl shadow hover:shadow-xl transition overflow-hidden"
     >
-      {isDiscounted && (
-        <div className="absolute top-0 left-0 bg-red-500 text-white text-[10px] font-black px-3 py-1 rounded-br-lg z-10 uppercase tracking-widest">
-          {discountPercentage}% Off
-        </div>
-      )}
 
-      <div className="aspect-square w-full mb-4 overflow-hidden rounded-xl bg-gray-50">
-        <img 
-          src={offer.image || "https://via.placeholder.com/300"} 
+      {/* Offer Banner */}
+      <div className="relative h-40 overflow-hidden">
+        <img
+          src={offer.image?.url}
           alt={offer.name}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          className="w-full h-full object-cover"
         />
-      </div>
 
-      <div className="space-y-3">
-        <div className="flex justify-between items-start">
-          <h3 className="font-bold text-gray-900 line-clamp-1">{offer.name}</h3>
-          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button onClick={() => onEdit(offer._id)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors">
-              <Edit2 size={16} />
-            </button>
-            <button onClick={() => onDelete(offer._id)} className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors">
-              <Trash2 size={16} />
-            </button>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {isDiscounted ? (
-            <>
-              <span className="text-xl font-black text-gray-900">₹{offer.finalPrice}</span>
-              <span className="text-sm text-gray-400 line-through">₹{offer.basePrice}</span>
-            </>
-          ) : (
-            <span className="text-xl font-black text-gray-900">₹{offer.basePrice}</span>
-          )}
-        </div>
-
-        <div className="pt-3 border-t border-gray-50 flex items-center justify-between text-[11px] font-medium text-gray-400 uppercase tracking-tighter">
-          <div className="flex items-center gap-1">
-            <Calendar size={12} className="text-[#C5A059]" />
-            <span>{offer.startDate?.slice(0, 10) || "N/A"}</span>
-          </div>
-          <span>to</span>
-          <div className="flex items-center gap-1">
-            <span>{offer.endDate?.slice(0, 10) || "N/A"}</span>
-          </div>
+        <div className="absolute bottom-2 left-3 text-white font-bold text-lg bg-black/50 px-2 py-1 rounded">
+          {offer.name}
         </div>
       </div>
+
+      <div className="p-4 space-y-4">
+
+        {/* ITEMS GRID */}
+        <div className="grid grid-cols-2 gap-3">
+
+          {items.map((item) => (
+
+            <div
+              key={item._id}
+              className="border rounded-lg overflow-hidden bg-gray-50 relative"
+            >
+
+              {/* Discount Badge */}
+              {item.discountLabel && (
+                <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
+                  {item.discountLabel}
+                </div>
+              )}
+
+              {/* ITEM IMAGE */}
+              <div className="h-24 overflow-hidden">
+                <img
+                  src={item.images?.[0]?.url}
+                  alt={item.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              {/* ITEM INFO */}
+              <div className="p-2">
+
+                <div className="text-sm font-semibold">
+                  {item.name}
+                </div>
+
+                {/* PRICE */}
+                <div className="flex items-center gap-2 mt-1">
+
+                  <span className="text-gray-400 line-through text-xs">
+                    ₹{item.originalPrice}
+                  </span>
+
+                  <span className="font-bold text-sm">
+                    ₹{item.finalPrice}
+                  </span>
+
+                </div>
+
+                {item.savings > 0 && (
+                  <div className="text-green-600 text-xs">
+                    Save ₹{item.savings}
+                  </div>
+                )}
+
+              </div>
+
+            </div>
+
+          ))}
+
+        </div>
+
+        {/* OFFER DATES */}
+        <div className="flex justify-between text-xs text-gray-500">
+
+          <span className="flex items-center gap-1">
+            <Calendar size={12} />
+            {offer.startDate?.slice(0, 10)}
+          </span>
+
+          <span>{offer.endDate?.slice(0, 10)}</span>
+
+        </div>
+
+        {/* ACTION BUTTONS */}
+        <div className="flex gap-2">
+
+          <button
+            onClick={() => onEdit(offer._id)}
+            className="flex-1 text-blue-600 border rounded-lg py-2 flex justify-center hover:bg-blue-50"
+          >
+            <Edit2 size={16} />
+          </button>
+
+          <button
+            onClick={() => onDelete(offer._id)}
+            className="flex-1 text-red-600 border rounded-lg py-2 flex justify-center hover:bg-red-50"
+          >
+            <Trash2 size={16} />
+          </button>
+
+        </div>
+
+      </div>
+
     </motion.div>
   );
 }
