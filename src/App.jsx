@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axiosClient from "./api/axiosClient";
@@ -11,13 +12,13 @@ import Offers from "./Pages/Offers";
 import Settings from "./Pages/Settings";
 import Categories from "./Pages/Categories";
 import AddItem from "./Pages/AddItem";
-import LiveOrders from "./Pages/LiveOrders";
 import KitchenStaff from "./Pages/KitchenStaff";
 import DailyRoster from "./Pages/DailyRoster";
 import ComboPage from "./Pages/ComboPage";
 import AdminOrdersPage from "./Pages/AdminOrdersPage";
 import OffersPage from "./Pages/CreateOffer";
 import OffersList from "./Pages/OfferList";
+import Riders from "./Pages/Riders";
 
 const ADMIN_LOGIN = import.meta.env.VITE_ADMIN_LOGIN;
 
@@ -89,13 +90,13 @@ export default function App() {
           <Route path="offers" element={<Offers />} />
           <Route path="settings" element={<Settings />} />
           <Route path="add-item" element={<AddItem />} />
-          <Route path="live-orders" element={<LiveOrders />} />
           <Route path="kitchen-staff" element={<KitchenStaff />} />
           <Route path="daily-roster" element={<DailyRoster />} />
           <Route path="orders" element={<AdminOrdersPage />} />
           <Route path="combos" element={<ComboPage />} />
-                <Route path="offersdining" element={<OffersPage />} />
-                 <Route path="offerslist" element={<OffersList />} />
+          <Route path="offersdining" element={<OffersPage />} />
+          <Route path="offerslist" element={<OffersList />} />
+          <Route path="riders" element={<Riders />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />

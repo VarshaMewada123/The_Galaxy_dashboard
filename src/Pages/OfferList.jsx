@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -89,21 +90,15 @@ export default function OfferManagement() {
   return (
     <div className="min-h-screen bg-[#F9F9F7] p-6 text-gray-900">
       <div className="max-w-7xl mx-auto">
-
         <header className="mb-10">
           <h1 className="text-3xl font-bold">
             Promotions <span className="text-[#C5A059]">&</span> Offers
           </h1>
-          <p className="text-gray-500 mt-1">
-            Manage your store discounts
-          </p>
+          <p className="text-gray-500 mt-1">Manage your store discounts</p>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-          {/* OFFER LIST */}
           <main className={`${isEditing ? "lg:col-span-7" : "lg:col-span-12"}`}>
-
             {loading ? (
               <div className="h-64 flex items-center justify-center">
                 <div className="w-8 h-8 border-4 border-[#C5A059] border-t-transparent rounded-full animate-spin" />
@@ -126,10 +121,8 @@ export default function OfferManagement() {
                 </AnimatePresence>
               </div>
             )}
-
           </main>
 
-          {/* EDIT PANEL */}
           <AnimatePresence>
             {isEditing && (
               <motion.aside
@@ -139,7 +132,6 @@ export default function OfferManagement() {
                 className="lg:col-span-5"
               >
                 <div className="bg-white rounded-2xl shadow-xl border">
-
                   <div className="bg-[#C5A059] p-4 flex justify-between text-white">
                     <h2 className="font-semibold">Edit Offer</h2>
                     <button onClick={closeEditor}>
@@ -148,7 +140,6 @@ export default function OfferManagement() {
                   </div>
 
                   <form onSubmit={updateOffer} className="p-6 space-y-4">
-
                     <input
                       name="name"
                       value={formData.name || ""}
@@ -171,125 +162,18 @@ export default function OfferManagement() {
                     <button className="w-full bg-[#C5A059] text-white p-3 rounded-lg hover:bg-[#b08d4b]">
                       Save Changes
                     </button>
-
                   </form>
-
                 </div>
               </motion.aside>
             )}
           </AnimatePresence>
-
         </div>
       </div>
     </div>
   );
 }
 
-// function OfferCard({ offer, onEdit, onDelete }) {
-
-//   const items = offer.items || [];
-
-//   return (
-//     <motion.div
-//       layout
-//       initial={{ opacity: 0, y: 15 }}
-//       animate={{ opacity: 1, y: 0 }}
-//       className="bg-white rounded-xl shadow hover:shadow-xl transition overflow-hidden relative"
-//     >
-
-//       {/* Offer Image */}
-//       <div className="aspect-square overflow-hidden bg-gray-100">
-//         <img
-//           src={offer.image?.url}
-//           alt={offer.name}
-//           className="w-full h-full object-cover hover:scale-110 transition duration-500"
-//         />
-//       </div>
-
-//       <div className="p-4 space-y-3">
-
-//         <h3 className="font-bold text-lg">{offer.name}</h3>
-
-//         {/* All Discounted Items */}
-//         <div className="space-y-3">
-
-//           {items.map((item) => (
-//             <div
-//               key={item._id}
-//               className="border rounded-lg p-3 bg-gray-50 relative"
-//             >
-
-//               {item.discountLabel && (
-//                 <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
-//                   {item.discountLabel}
-//                 </div>
-//               )}
-
-//               <div className="font-semibold">
-//                 {item.name}
-//               </div>
-
-//               <div className="flex items-center gap-2 mt-1">
-
-//                 <span className="text-gray-400 line-through text-sm">
-//                   ₹{item.originalPrice}
-//                 </span>
-
-//                 <span className="text-lg font-bold text-black">
-//                   ₹{item.finalPrice}
-//                 </span>
-
-//               </div>
-
-//               {item.savings > 0 && (
-//                 <div className="text-green-600 text-xs font-semibold">
-//                   You saved ₹{item.savings}
-//                 </div>
-//               )}
-
-//             </div>
-//           ))}
-
-//         </div>
-
-//         <div className="flex justify-between text-xs text-gray-500 mt-3">
-
-//           <span className="flex items-center gap-1">
-//             <Calendar size={12} />
-//             {offer.startDate?.slice(0, 10)}
-//           </span>
-
-//           <span>{offer.endDate?.slice(0, 10)}</span>
-
-//         </div>
-
-//         <div className="flex gap-2 mt-3">
-
-//           <button
-//             onClick={() => onEdit(offer._id)}
-//             className="flex-1 text-blue-600 border rounded-lg py-2 flex justify-center hover:bg-blue-50"
-//           >
-//             <Edit2 size={16} />
-//           </button>
-
-//           <button
-//             onClick={() => onDelete(offer._id)}
-//             className="flex-1 text-red-600 border rounded-lg py-2 flex justify-center hover:bg-red-50"
-//           >
-//             <Trash2 size={16} />
-//           </button>
-
-//         </div>
-
-//       </div>
-
-//     </motion.div>
-//   );
-// }
-
-
 function OfferCard({ offer, onEdit, onDelete }) {
-
   const items = offer.items || [];
 
   return (
@@ -299,8 +183,6 @@ function OfferCard({ offer, onEdit, onDelete }) {
       animate={{ opacity: 1, y: 0 }}
       className="bg-white rounded-xl shadow hover:shadow-xl transition overflow-hidden"
     >
-
-      {/* Offer Banner */}
       <div className="relative h-40 overflow-hidden">
         <img
           src={offer.image?.url}
@@ -314,25 +196,18 @@ function OfferCard({ offer, onEdit, onDelete }) {
       </div>
 
       <div className="p-4 space-y-4">
-
-        {/* ITEMS GRID */}
         <div className="grid grid-cols-2 gap-3">
-
           {items.map((item) => (
-
             <div
               key={item._id}
               className="border rounded-lg overflow-hidden bg-gray-50 relative"
             >
-
-              {/* Discount Badge */}
               {item.discountLabel && (
                 <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
                   {item.discountLabel}
                 </div>
               )}
 
-              {/* ITEM IMAGE */}
               <div className="h-24 overflow-hidden">
                 <img
                   src={item.images?.[0]?.url}
@@ -341,24 +216,15 @@ function OfferCard({ offer, onEdit, onDelete }) {
                 />
               </div>
 
-              {/* ITEM INFO */}
               <div className="p-2">
+                <div className="text-sm font-semibold">{item.name}</div>
 
-                <div className="text-sm font-semibold">
-                  {item.name}
-                </div>
-
-                {/* PRICE */}
                 <div className="flex items-center gap-2 mt-1">
-
                   <span className="text-gray-400 line-through text-xs">
                     ₹{item.originalPrice}
                   </span>
 
-                  <span className="font-bold text-sm">
-                    ₹{item.finalPrice}
-                  </span>
-
+                  <span className="font-bold text-sm">₹{item.finalPrice}</span>
                 </div>
 
                 {item.savings > 0 && (
@@ -366,30 +232,21 @@ function OfferCard({ offer, onEdit, onDelete }) {
                     Save ₹{item.savings}
                   </div>
                 )}
-
               </div>
-
             </div>
-
           ))}
-
         </div>
 
-        {/* OFFER DATES */}
         <div className="flex justify-between text-xs text-gray-500">
-
           <span className="flex items-center gap-1">
             <Calendar size={12} />
             {offer.startDate?.slice(0, 10)}
           </span>
 
           <span>{offer.endDate?.slice(0, 10)}</span>
-
         </div>
 
-        {/* ACTION BUTTONS */}
         <div className="flex gap-2">
-
           <button
             onClick={() => onEdit(offer._id)}
             className="flex-1 text-blue-600 border rounded-lg py-2 flex justify-center hover:bg-blue-50"
@@ -403,11 +260,8 @@ function OfferCard({ offer, onEdit, onDelete }) {
           >
             <Trash2 size={16} />
           </button>
-
         </div>
-
       </div>
-
     </motion.div>
   );
 }

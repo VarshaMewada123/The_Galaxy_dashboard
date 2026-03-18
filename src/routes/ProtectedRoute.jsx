@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import axiosClient from "@/api/axiosClient";

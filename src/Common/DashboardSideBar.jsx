@@ -81,6 +81,11 @@ export default function Sidebar() {
       path: "/admin/offersdining",
       icon: <Clock size={18} />,
     },
+        {
+      name: "Riders",
+      path: "/admin/riders",
+      icon: <Clock size={18} />,
+    },
   ];
 
   const handleLogout = async () => {
