@@ -1,5 +1,7 @@
+/* eslint-disable no-unused-vars */
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   TrendingUp,
   ShoppingBag,
@@ -8,7 +10,7 @@ import {
   Utensils,
   MapPin,
   Star,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
 import axiosClient from "../api/axiosClient";
@@ -16,31 +18,36 @@ import axiosClient from "../api/axiosClient";
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [topDishes, setTopDishes] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [areas, setAreas] = useState([]);
   const [mostSelling, setMostSelling] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadDashboard();
   }, []);
 
+  const formatCurrency = (num) => {
+    if (!num) return "₹0";
+    if (num >= 10000000) return `₹${(num / 10000000).toFixed(1)}Cr`;
+    if (num >= 100000) return `₹${(num / 100000).toFixed(1)}L`;
+    if (num >= 1000) return `₹${(num / 1000).toFixed(1)}K`;
+    return `₹${num}`;
+  };
+
   const loadDashboard = async () => {
     try {
-      const [statsRes, dishesRes, categoryRes, areaRes, mostRes] = await Promise.all([
+      const [statsRes, dishesRes, areaRes, mostRes] = await Promise.all([
         axiosClient.get("/admin/dashboard/stats"),
         axiosClient.get("/admin/dashboard/top-dishes"),
-        axiosClient.get("/admin/dashboard/category-sales"),
         axiosClient.get("/admin/dashboard/orders-by-landmark"),
-        axiosClient.get("/admin/dashboard/most-selling")
+        axiosClient.get("/admin/dashboard/most-selling"),
       ]);
 
       setStats(statsRes.data.data);
       setTopDishes(dishesRes.data.data);
-      setCategories(categoryRes.data.data);
       setAreas(areaRes.data.data);
       setMostSelling(mostRes.data.data);
-      toast.success("Analytics updated");
     } catch (err) {
       console.error("Dashboard error:", err);
       toast.error("Failed to fetch dashboard data");
@@ -53,143 +60,167 @@ const Dashboard = () => {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center bg-[#FAFAFA] z-50">
         <Loader2 className="h-10 w-10 animate-spin text-[#C5A059]" />
-        <p className="mt-4 text-sm font-medium text-gray-500">Loading Galaxy Analytics...</p>
+        <p className="mt-4 text-sm font-medium text-gray-500 animate-pulse">
+          Loading Galaxy Analytics...
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-[#1A1A1A] antialiased selection:bg-[#C5A059]/30">
+    <div className="min-h-screen bg-[#F8F9FA] text-[#1A1A1A] antialiased p-4 md:p-6 lg:p-5">
       <Toaster position="top-right" />
-      
-      <main className="max-w-[1440px] mx-auto p-4 md:p-8 lg:p-10 space-y-8">
-        
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight">
-              Galaxy <span className="text-[#C5A059]">Dashboard</span>
-            </h1>
-            <p className="text-gray-500 text-sm md:text-base mt-1">Real-time hotel performance overview</p>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-100 rounded-full w-fit">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-            </span>
-            <span className="text-green-700 font-bold text-xs uppercase tracking-wider">System Live</span>
-          </div>
-        </header>
 
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          <StatCard title="Total Revenue" value={`₹${stats?.totalRevenue?.toLocaleString() || 0}`} icon={<TrendingUp />} color="bg-blue-50 text-blue-600" />
-          <StatCard title="Total Orders" value={stats?.totalOrders || 0} icon={<ShoppingBag />} color="bg-orange-50 text-orange-600" />
-          <StatCard title="Weekly Orders" value={stats?.weeklyOrders || 0} icon={<Clock />} color="bg-purple-50 text-purple-600" />
-          <StatCard title="Monthly Orders" value={stats?.monthlyOrders || 0} icon={<CheckCircle />} color="bg-green-50 text-green-600" />
+      <div className="max-w-7xl mx-auto space-y-6 py-0">
+        <div className="mb-4 md:mb-6">
+          <h1 className="text-2xl md:text-3xl font-black tracking-tight">
+            Galaxy <span className="text-[#C5A059]">Dashboard</span>
+          </h1>
+          <p className="text-gray-500 text-xs md:text-sm font-medium mt-1">
+            Real-time performance metrics
+          </p>
+        </div>
+
+        <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <StatCard
+            title="Revenue"
+            value={formatCurrency(stats?.totalRevenue)}
+            icon={<TrendingUp size={20} />}
+            color="bg-blue-50 text-blue-600"
+          />
+          <StatCard
+            title="Total Orders"
+            value={stats?.totalOrders || 0}
+            icon={<ShoppingBag size={20} />}
+            color="bg-orange-50 text-orange-600"
+            onClick={() => navigate("/admin/orders")}
+          />
+          <StatCard
+            title="Weekly"
+            value={stats?.weeklyOrders || 0}
+            icon={<Clock size={20} />}
+            color="bg-purple-50 text-purple-600"
+          />
+          <StatCard
+            title="Monthly"
+            value={stats?.monthlyOrders || 0}
+            icon={<CheckCircle size={20} />}
+            color="bg-green-50 text-green-600"
+          />
+
+          <motion.div
+            whileHover={{ y: -5 }}
+            className="bg-[#1A1A1A] p-5 rounded-3xl shadow-sm flex flex-col justify-between border border-gray-800 relative overflow-hidden"
+          >
+            <div className="flex justify-between items-start relative z-10">
+              <div className="p-2 bg-[#C5A059]/10 rounded-xl text-[#C5A059]">
+                <Star size={20} fill="#C5A059" />
+              </div>
+              <span className="text-[10px] font-bold text-[#C5A059] uppercase tracking-tighter bg-[#C5A059]/10 px-2 py-0.5 rounded">
+                MVP
+              </span>
+            </div>
+            <div className="relative z-10 mt-4">
+              <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">
+                Most Selling
+              </p>
+              <h3 className="text-white text-lg font-bold leading-tight truncate">
+                {mostSelling?._id || "N/A"}
+              </h3>
+              <p className="text-[#C5A059] text-xs font-bold">
+                {mostSelling?.totalQty || 0} Sold
+              </p>
+            </div>
+          </motion.div>
         </section>
 
-        <div className="grid grid-cols-12 gap-6">
-          
-          <div className="col-span-12 lg:col-span-8 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Section title="Top Selling Dishes" icon={<Utensils className="text-[#C5A059]" />}>
-                {topDishes.map((dish, index) => (
-                  <Row key={index} left={`${index + 1}. ${dish.dish}`} right={`${dish.quantity} orders`} />
-                ))}
-              </Section>
-
-              <Section title="Category Wise Sales" icon={<TrendingUp className="text-[#C5A059]" />}>
-                {categories.map((cat, index) => (
-                  <Row key={index} left={cat.category} right={`₹${cat.totalSales?.toLocaleString()}`} />
-                ))}
-              </Section>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Section title="Top Dishes" icon={<Utensils size={18} />}>
+            <div className="divide-y divide-gray-50">
+              {topDishes.slice(0, 6).map((dish, index) => (
+                <Row
+                  key={index}
+                  left={`${index + 1}. ${dish.dish}`}
+                  right={`${dish.quantity}`}
+                  subRight="orders"
+                />
+              ))}
             </div>
+          </Section>
 
-            <Section title="Orders By Area" icon={<MapPin className="text-[#C5A059]" />}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
-                {areas.map((area, index) => (
-                  <Row key={index} left={area.landmark} right={`${area.orders} orders`} />
-                ))}
-              </div>
-            </Section>
-          </div>
-
-          <aside className="col-span-12 lg:col-span-4 space-y-6">
-            <AnimatePresence>
-              {mostSelling && (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="bg-[#1A1A1A] text-white rounded-3xl p-8 shadow-xl relative overflow-hidden"
-                >
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-2 text-[#C5A059] font-bold mb-6 italic tracking-widest uppercase text-xs">
-                      <Star size={16} fill="#C5A059" />
-                      MVP of the Month
-                    </div>
-                    <h2 className="text-3xl font-bold mb-2">{mostSelling._id}</h2>
-                    <p className="text-gray-400 text-lg">{mostSelling.totalQty} Units Sold</p>
-                    <button 
-                      onClick={() => toast("Promotion applied to " + mostSelling._id)}
-                      className="mt-8 w-full py-3 bg-[#C5A059] hover:bg-[#b08e4d] transition-colors rounded-xl font-bold text-sm"
-                    >
-                      View Insights
-                    </button>
-                  </div>
-                  <div className="absolute -right-4 -bottom-4 opacity-10">
-                    <Utensils size={150} />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            
-            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-              <h3 className="font-bold text-lg mb-4 text-[#1A1A1A]">Quick Actions</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <button onClick={() => toast.success("Report Generated")} className="p-3 bg-gray-50 rounded-2xl text-xs font-semibold hover:bg-gray-100 transition-colors">Download PDF</button>
-                <button onClick={() => loadDashboard()} className="p-3 bg-gray-50 rounded-2xl text-xs font-semibold hover:bg-gray-100 transition-colors">Refresh Data</button>
-              </div>
+          <Section title="Orders By Area" icon={<MapPin size={18} />}>
+            <div className="divide-y divide-gray-50">
+              {areas.slice(0, 6).map((area, index) => (
+                <Row
+                  key={index}
+                  left={area.landmark}
+                  right={`${area.orders}`}
+                  subRight="orders"
+                />
+              ))}
             </div>
-          </aside>
+          </Section>
         </div>
-      </main>
+      </div>
     </div>
   );
 };
 
 const Section = ({ title, icon, children }) => (
-  <motion.div 
+  <motion.div
     initial={{ opacity: 0, y: 10 }}
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true }}
-    className="bg-white rounded-3xl p-6 md:p-8 border border-gray-100 shadow-sm hover:shadow-md transition-shadow h-full"
+    className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm"
   >
-    <div className="flex items-center gap-3 font-bold mb-6 text-lg">
-      <span className="p-2 bg-gray-50 rounded-lg">{icon}</span>
-      {title}
+    <div className="flex items-center gap-3 font-bold mb-4 text-gray-800">
+      <span className="p-2 bg-gray-50 rounded-xl text-[#C5A059]">{icon}</span>
+      <span className="tracking-tight">{title}</span>
     </div>
-    <div className="space-y-4">{children}</div>
+    <div className="space-y-1">{children}</div>
   </motion.div>
 );
 
-const Row = ({ left, right }) => (
-  <div className="flex justify-between items-center group py-1 border-b border-transparent hover:border-gray-50 transition-colors">
-    <span className="text-gray-600 group-hover:text-[#1A1A1A] transition-colors truncate pr-4">{left}</span>
-    <span className="font-bold whitespace-nowrap text-[#C5A059]">{right}</span>
+const Row = ({ left, right, subRight }) => (
+  <div className="flex justify-between items-center py-3 group transition-all">
+    <span className="text-sm text-gray-600 group-hover:text-black font-medium truncate pr-4 transition-colors">
+      {left}
+    </span>
+    <div className="text-right">
+      <span className="font-bold text-sm text-[#1A1A1A] block leading-none">
+        {right}
+      </span>
+      <span className="text-[10px] text-gray-400 uppercase font-semibold">
+        {subRight}
+      </span>
+    </div>
   </div>
 );
 
-const StatCard = ({ title, value, icon, color }) => (
+const StatCard = ({ title, value, icon, color, onClick }) => (
   <motion.div
-    whileHover={{ y: -5 }}
-    transition={{ type: "spring", stiffness: 300 }}
-    className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col items-start justify-between min-h-[160px]"
+    whileHover={{ y: onClick ? -5 : 0 }}
+    onClick={onClick}
+    role={onClick ? "button" : undefined}
+    tabIndex={onClick ? 0 : undefined}
+    onKeyDown={(e) => {
+      if (onClick && (e.key === "Enter" || e.key === " ")) {
+        onClick();
+      }
+    }}
+    className={`bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between h-full transition
+      ${onClick ? "cursor-pointer hover:shadow-md" : ""}
+    `}
   >
-    <div className={`p-3 rounded-2xl ${color} mb-4`}>
-      {icon}
-    </div>
-    <div>
-      <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">{title}</p>
-      <h3 className="text-2xl md:text-3xl font-black mt-1 text-[#1A1A1A] tracking-tight">{value}</h3>
+    <div className={`w-fit p-2.5 rounded-2xl ${color}`}>{icon}</div>
+
+    <div className="mt-4">
+      <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">
+        {title}
+      </p>
+      <h3 className="text-xl md:text-2xl font-black text-[#1A1A1A] tracking-tight truncate">
+        {value}
+      </h3>
     </div>
   </motion.div>
 );
