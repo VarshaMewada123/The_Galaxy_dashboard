@@ -21,6 +21,7 @@ import OffersList from "./Pages/OfferList";
 import Riders from "./Pages/Riders";
 import SubCategories from "./Pages/Subcategories";
 import Availability from "./Pages/Availability";
+import AdminRooms from "./Pages/AdminRooms";
 
 const ADMIN_LOGIN = import.meta.env.VITE_ADMIN_LOGIN;
 
@@ -101,6 +102,8 @@ export default function App() {
           <Route path="riders" element={<Riders />} />
   <Route path="availability" element={<Availability />} />
           <Route path="subcategories" element={<SubCategories />} />
+          <Route path="admin-rooms" element={<AdminRooms />} />
+
         </Route>
 
         <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
