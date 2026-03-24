@@ -148,9 +148,9 @@ export default function AdminOrdersPage() {
       <td className="p-4 text-sm text-stone-700 font-medium">
         <Phone size={12} className="inline mr-1 opacity-40"/> {order.user?.phone || "N/A"}
       </td>
-      <td className="p-4 text-xs text-stone-500 max-w-[200px] truncate">
+      {/* <td className="p-4 text-xs text-stone-500 max-w-[200px] truncate">
         {order.items?.map(i => `${i.name || i.nameSnapshot} (x${i.quantity})`).join(", ")}
-      </td>
+      </td> */}
       <td className="p-4">
         <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-tighter ${getStatusStyle(order.status)}`}>
           {order.status?.replace("_", " ")}
@@ -331,7 +331,7 @@ export default function AdminOrdersPage() {
                 <table className="hidden lg:table w-full text-left">
                   <thead className="bg-stone-50/50 border-b border-stone-100">
                     <tr>
-                      {["Order", "Customer", "Items", "Status", "Map", "Rider", "Actions"].map((h) => (
+                      {["Order", "Customer", "Status", "Map", "Rider", "Actions"].map((h) => (
                         <th key={h} className="px-6 py-4 text-[10px] font-bold text-stone-400 uppercase tracking-widest">{h}</th>
                       ))}
                     </tr>

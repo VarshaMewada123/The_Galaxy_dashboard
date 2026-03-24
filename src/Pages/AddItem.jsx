@@ -1,31 +1,23 @@
-/* eslint-disable no-unused-vars */
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import axiosClient from "@/api/axiosClient";
 import toast, { Toaster } from "react-hot-toast";
-import {
-  Loader2,
-  ChevronLeft,
-  ImagePlus,
-  X,
-  Utensils,
-  IndianRupee,
-  Clock,
-  ArrowLeft,
-} from "lucide-react";
+import { Loader2, X, ArrowLeft, Upload, IndianRupee, Clock, ChevronDown } from "lucide-react";
 
 export default function AddMenuItem() {
   const navigate = useNavigate();
+
   const [uploading, setUploading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previews, setPreviews] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [loadingCats, setLoadingCats] = useState(true);
+  const [subCategories, setSubCategories] = useState([]);
+  const [loadingSub, setLoadingSub] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
     category: "",
+    subCategory: "",
     basePrice: "",
     isVeg: true,
     isJain: false,
@@ -38,18 +30,36 @@ export default function AddMenuItem() {
     const fetchCats = async () => {
       try {
         const res = await axiosClient.get("/admin/dining/categories");
-        const data = res.data.data || [];
-        setCategories(data);
-        if (data.length > 0)
-          setFormData((p) => ({ ...p, category: data[0]._id }));
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoadingCats(false);
+        setCategories(res?.data?.data ?? []);
+      } catch {
+        toast.error("Failed to load categories");
       }
     };
     fetchCats();
   }, []);
+
+  useEffect(() => {
+    if (!formData.category) {
+      setSubCategories([]);
+      setFormData((p) => ({ ...p, subCategory: "" }));
+      return;
+    }
+
+    const fetchSub = async () => {
+      try {
+        setLoadingSub(true);
+        const res = await axiosClient.get(
+          `/admin/dining/subcategories?category=${formData.category}`
+        );
+        setSubCategories(res?.data?.data ?? []);
+      } catch {
+        toast.error("Failed to load subcategories");
+      } finally {
+        setLoadingSub(false);
+      }
+    };
+    fetchSub();
+  }, [formData.category]);
 
   useEffect(() => {
     const urls = selectedFiles.map((file) => URL.createObjectURL(file));
@@ -59,306 +69,289 @@ export default function AddMenuItem() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      };
+      if (name === "isVeg" && !checked) updated.isJain = false;
+      return updated;
+    });
+  };
 
-    if (name === "basePrice") {
-      const val = parseFloat(value);
-      if (val < 0) return;
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length + selectedFiles.length > 5) {
+      return toast.error("Max 5 images allowed");
     }
+    setSelectedFiles((prev) => [...prev, ...files]);
+  };
 
-    setFormData((p) => ({
-      ...p,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+  const removeImage = (index) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.subCategory) return toast.error("Select SubCategory");
+    if (!formData.name.trim()) return toast.error("Enter name");
 
-    if (parseFloat(formData.basePrice) < 50) {
-      toast.error("Minimum price must be ₹50");
-      return;
-    }
+    const price = Number(formData.basePrice);
+    if (!price || price < 50) return toast.error("Minimum price ₹50");
 
     setUploading(true);
     const loadingToast = toast.loading("Creating menu item...");
+
     try {
       const fd = new FormData();
       Object.keys(formData).forEach((key) => fd.append(key, formData[key]));
       selectedFiles.forEach((file) => fd.append("images", file));
 
-      await axiosClient.post("/admin/dining/menu", fd, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
+      await axiosClient.post("/admin/dining/menu", fd);
       toast.success("Item added successfully!", { id: loadingToast });
-      setTimeout(() => navigate("/admin/dining-images"), 1500);
+      navigate("/admin/dining-images");
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to create", {
-        id: loadingToast,
-      });
+      toast.error(err?.response?.data?.message || "Failed", { id: loadingToast });
     } finally {
       setUploading(false);
     }
   };
 
+  const inputStyle = "w-full bg-white border border-stone-200 p-3 rounded-lg focus:ring-2 focus:ring-[#C6A45C] focus:border-transparent outline-none transition-all placeholder:text-stone-400 text-stone-800";
+  const labelStyle = "block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1.5 ml-1";
+
   return (
-    <div className="min-h-screen bg-[#FFFFFF] p-6 lg:p-12 font-sans">
-      <Toaster position="top-right" reverseOrder={false} />
-      <div className="max-w-5xl mx-auto">
-        <nav className="mb-8 lg:mb-12">
+    <div className="min-h-screen bg-[#FDFBF7] text-stone-900 font-sans antialiased pb-12">
+      <Toaster position="top-center" />
+
+      {/* HEADER */}
+      <header className="top-0 z-30 bg-[#FDFBF7]/80 backdrop-blur-md border-b border-stone-100 px-4 py-4 md:px-8">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
-            className="group flex items-center gap-3 text-slate-400 hover:text-[#C5A059] transition-all"
+            className="group flex items-center gap-2 text-stone-600 hover:text-[#C6A45C] transition-colors cursor-pointer"
           >
-            <div className="p-2 rounded-full bg-slate-100 group-hover:bg-[#C5A059]/10 transition-colors">
-              <ArrowLeft size={18} />
+            <div className="p-2 rounded-full group-hover:bg-[#C6A45C]/10 transition-colors">
+              <ArrowLeft size={20} />
             </div>
-            <span className="text-sm font-bold uppercase tracking-widest">Back</span>
+            <span className="font-medium hidden sm:inline">Back</span>
           </button>
-        </nav>
+          <h1 className="text-xl font-semibold text-stone-800">New Menu Item</h1>
+          <div className="w-10 md:w-24"></div> 
+        </div>
+      </header>
 
-        <header className="flex items-center gap-4 mb-10">
-          <div className="flex justify-between w-full">
-            <div>
-              <h1 className="text-3xl font-black text-gray-900">
-                New{" "}
-                <span className="italic font-serif text-[#C5A059]">
-                  Creation
-                </span>
-              </h1>
-              <p className="text-gray-400 text-xs uppercase tracking-widest font-bold">
-                Menu Registry
-              </p>
-            </div>
-          </div>
-        </header>
-
-        <form
-          onSubmit={handleSubmit}
-          className="grid grid-cols-1 lg:grid-cols-3 gap-8"
-        >
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 space-y-6">
-              <div className="space-y-4">
-                <div className="relative">
-                  <Utensils
-                    className="absolute left-4 top-4 text-gray-300"
-                    size={18}
-                  />
+      <main className="max-w-7xl mx-auto px-4 py-8 md:px-8">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* LEFT: INFO FORM */}
+          <div className="lg:col-span-7 space-y-6">
+            <section className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm">
+              <div className="space-y-5">
+                <div>
+                  <label className={labelStyle}>Item Name</label>
                   <input
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    placeholder="Dish Name"
-                    className="w-full bg-gray-50 p-4 pl-12 rounded-2xl outline-none focus:ring-2 focus:ring-[#C5A059]"
-                    required
+                    placeholder="e.g. Truffle Mushroom Risotto"
+                    className={inputStyle}
                   />
                 </div>
 
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  placeholder="Describe the taste and ingredients..."
-                  className="w-full bg-gray-50 p-4 rounded-2xl h-32 outline-none focus:ring-2 focus:ring-[#C5A059] resize-none"
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <select
-                    name="category"
-                    value={formData.category}
+                <div>
+                  <label className={labelStyle}>Description</label>
+                  <textarea
+                    name="description"
+                    rows={3}
+                    value={formData.description}
                     onChange={handleChange}
-                    className="bg-gray-50 p-4 rounded-2xl outline-none font-bold"
-                  >
-                    {categories.map((c) => (
-                      <option key={c._id} value={c._id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="Describe the flavors and ingredients..."
+                    className={`${inputStyle} resize-none`}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="relative">
-                    <IndianRupee
-                      className="absolute left-4 top-4 text-gray-300"
-                      size={18}
-                    />
+                    <label className={labelStyle}>Category</label>
+                    <select
+                      name="category"
+                      value={formData.category}
+                      onChange={handleChange}
+                      className={`${inputStyle} appearance-none cursor-pointer`}
+                    >
+                      <option value="">Select Category</option>
+                      {categories.map((c) => (
+                        <option key={c._id} value={c._id}>{c.name}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 bottom-3.5 text-stone-400 pointer-events-none" size={18} />
+                  </div>
+
+                  <div className="relative">
+                    <label className={labelStyle}>Sub Category</label>
+                    <select
+                      name="subCategory"
+                      value={formData.subCategory}
+                      onChange={handleChange}
+                      disabled={!formData.category || loadingSub}
+                      className={`${inputStyle} appearance-none cursor-pointer disabled:bg-stone-50 disabled:text-stone-400`}
+                    >
+                      <option value="">{loadingSub ? "Loading..." : "Select SubCategory"}</option>
+                      {subCategories.map((s) => (
+                        <option key={s._id} value={s._id}>{s.name}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 bottom-3.5 text-stone-400 pointer-events-none" size={18} />
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div>
+                  <label className={labelStyle}>Base Price</label>
+                  <div className="relative">
+                    <IndianRupee className="absolute left-3 top-3.5 text-stone-400" size={16} />
                     <input
                       type="number"
                       name="basePrice"
-                      min="50"
-                      step="1"
-                      onKeyDown={(e) =>
-                        ["e", "E", "+", "-"].includes(e.key) &&
-                        e.preventDefault()
-                      }
                       value={formData.basePrice}
                       onChange={handleChange}
-                      placeholder="Price (Min ₹50)"
-                      className="w-full bg-gray-50 p-4 pl-12 rounded-2xl outline-none font-bold text-[#C4A15A]"
-                      required
+                      placeholder="0.00"
+                      className={`${inputStyle} pl-9`}
                     />
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-6">
                 <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">
-                    Dietary Preference
-                  </p>
-                  <div className="flex flex-wrap gap-6">
-                    <label className="flex items-center gap-3 cursor-pointer group">
-                      <input
-                        type="checkbox"
-                        name="isVeg"
-                        checked={formData.isVeg}
-                        onChange={handleChange}
-                        className="sr-only"
-                      />
-                      <div
-                        className={`w-12 h-6 rounded-full transition-all relative ${formData.isVeg ? "bg-green-500" : "bg-gray-200"}`}
-                      >
-                        <div
-                          className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all ${formData.isVeg ? "translate-x-6" : ""}`}
-                        />
-                      </div>
-                      <span className="font-bold text-sm uppercase group-hover:text-[#C4A15A] transition-colors">
-                        {formData.isVeg ? "Veg" : "Non-Veg"}
-                      </span>
-                    </label>
-
-                    <label className="flex items-center gap-3 cursor-pointer group">
-                      <input
-                        type="checkbox"
-                        name="isJain"
-                        checked={formData.isJain}
-                        onChange={handleChange}
-                        className="sr-only"
-                      />
-                      <div
-                        className={`w-12 h-6 rounded-full transition-all relative ${formData.isJain ? "bg-yellow-500" : "bg-gray-200"}`}
-                      >
-                        <div
-                          className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all ${formData.isJain ? "translate-x-6" : ""}`}
-                        />
-                      </div>
-                      <span className="font-bold text-sm uppercase group-hover:text-[#C4A15A] transition-colors">
-                        Jain
-                      </span>
-                    </label>
+                  <label className={labelStyle}>Prep Time (Mins)</label>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-3.5 text-stone-400" size={16} />
+                    <input
+                      type="number"
+                      name="preparationTime"
+                      value={formData.preparationTime}
+                      onChange={handleChange}
+                      className={`${inputStyle} pl-9`}
+                    />
                   </div>
                 </div>
-              </div>
 
-              <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">
-                  Spice Level
-                </p>
-                <div className="flex gap-2">
-                  {["MILD", "MEDIUM", "SPICY"].map((lvl) => (
-                    <button
-                      key={lvl}
-                      type="button"
-                      onClick={() =>
-                        setFormData((p) => ({ ...p, spiceLevel: lvl }))
-                      }
-                      className={`flex-1 py-2 rounded-xl text-[10px] font-black transition-all ${formData.spiceLevel === lvl ? "bg-[#C4A15A] text-white shadow-lg" : "bg-gray-100 text-gray-400"}`}
-                    >
-                      {lvl}
-                    </button>
-                  ))}
+                <div>
+                  <label className={labelStyle}>Spice Level</label>
+                  <select
+                    name="spiceLevel"
+                    value={formData.spiceLevel}
+                    onChange={handleChange}
+                    className={`${inputStyle} cursor-pointer`}
+                  >
+                    <option value="MILD">MILD</option>
+                    <option value="MEDIUM">MEDIUM</option>
+                    <option value="SPICY">SPICY</option>
+                  </select>
                 </div>
               </div>
-            </div>
+
+              <div className="flex flex-wrap gap-8 mt-8 pt-6 border-t border-stone-50">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div className="relative flex items-center">
+                    <input
+                      type="checkbox"
+                      name="isVeg"
+                      checked={formData.isVeg}
+                      onChange={handleChange}
+                      className="peer h-6 w-6 cursor-pointer appearance-none rounded-md border-2 border-stone-200 checked:bg-[#C6A45C] checked:border-[#C6A45C] transition-all"
+                    />
+                    <div className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                      <div className="w-2 h-2 rounded-full bg-white"></div>
+                    </div>
+                  </div>
+                  <span className="text-sm font-medium text-stone-700 group-hover:text-stone-900 transition-colors">Vegetarian</span>
+                </label>
+
+                <label className={`flex items-center gap-3 cursor-pointer group transition-opacity ${!formData.isVeg ? "opacity-40 cursor-not-allowed" : "opacity-100"}`}>
+                  <div className="relative flex items-center">
+                    <input
+                      type="checkbox"
+                      name="isJain"
+                      disabled={!formData.isVeg}
+                      checked={formData.isJain}
+                      onChange={handleChange}
+                      className="peer h-6 w-6 cursor-pointer appearance-none rounded-md border-2 border-stone-200 checked:bg-[#C6A45C] checked:border-[#C6A45C] transition-all"
+                    />
+                    <div className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                      <div className="w-2 h-2 rounded-full bg-white"></div>
+                    </div>
+                  </div>
+                  <span className="text-sm font-medium text-stone-700 group-hover:text-stone-900 transition-colors">Jain Friendly</span>
+                </label>
+              </div>
+            </section>
           </div>
 
-          <div className="space-y-6">
-            <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100">
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 text-center">
-                Visuals
-              </p>
-              <div className="aspect-square relative border-2 border-dashed border-gray-100 rounded-3xl flex flex-col items-center justify-center bg-gray-50 hover:bg-yellow-50 cursor-pointer transition-all">
-                <ImagePlus className="text-gray-300 mb-2" size={32} />
-                <span className="text-[9px] font-black text-gray-400 uppercase">
-                  Drop photos here
-                </span>
-                <input
-                  type="file"
-                  multiple
-                  className="absolute inset-0 opacity-0 cursor-pointer"
-                  onChange={(e) =>
-                    setSelectedFiles([
-                      ...selectedFiles,
-                      ...Array.from(e.target.files),
-                    ])
-                  }
+          {/* RIGHT: IMAGE UPLOAD & SUBMIT */}
+          <div className="lg:col-span-5 space-y-6">
+            <section className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm">
+              <label className={labelStyle}>Gallery (Max 5)</label>
+              
+              <div className="mt-2 group relative border-2 border-dashed border-stone-200 hover:border-[#C6A45C] rounded-2xl p-8 transition-colors text-center cursor-pointer">
+                <input 
+                  type="file" 
+                  multiple 
+                  onChange={handleFileChange} 
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 />
+                <div className="flex flex-col items-center">
+                  <div className="p-3 bg-stone-50 group-hover:bg-[#C6A45C]/10 rounded-full transition-colors">
+                    <Upload className="text-stone-400 group-hover:text-[#C6A45C]" size={24} />
+                  </div>
+                  <p className="mt-3 text-sm font-medium text-stone-600">Click or drag images to upload</p>
+                  <p className="text-xs text-stone-400 mt-1">PNG, JPG up to 5MB</p>
+                </div>
               </div>
-              <div className="grid grid-cols-3 gap-2 mt-4">
-                {previews.map((url, i) => (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    key={i}
-                    className="aspect-square rounded-xl overflow-hidden relative group"
-                  >
-                    <img src={url} className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setSelectedFiles(
-                          selectedFiles.filter((_, idx) => idx !== i),
-                        )
-                      }
-                      className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-all"
-                    >
-                      <X size={10} />
-                    </button>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
 
-            <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100">
-              <div className="flex items-center gap-2 mb-4">
-                <Clock size={16} className="text-[#C4A15A]" />
-                <span className="text-[10px] font-black uppercase tracking-widest">
-                  Prep Time
-                </span>
-              </div>
-              <input
-                type="range"
-                name="preparationTime"
-                min="5"
-                max="60"
-                step="5"
-                value={formData.preparationTime}
-                onChange={handleChange}
-                className="w-full accent-[#C4A15A]"
-              />
-              <div className="text-2xl font-black mt-2">
-                {formData.preparationTime}{" "}
-                <span className="text-xs text-gray-400">MINS</span>
-              </div>
-            </div>
+              {previews.length > 0 && (
+                <div className="grid grid-cols-3 gap-3 mt-6">
+                  {previews.map((url, i) => (
+                    <div key={i} className="group relative aspect-square rounded-xl overflow-hidden border border-stone-100 shadow-sm animate-in fade-in zoom-in duration-300">
+                      <img src={url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Preview" />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(i)}
+                        className="absolute top-1.5 right-1.5 bg-white/90 backdrop-blur-sm p-1.5 rounded-lg text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-red-50 cursor-pointer"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
 
             <button
               type="submit"
               disabled={uploading}
-              className="w-full bg-[#C4A15A] text-white py-5 rounded-[2rem] font-black uppercase tracking-widest shadow-2xl hover:brightness-110 transition-all active:scale-95 disabled:bg-gray-300"
+              className="w-full bg-[#C6A45C] hover:bg-[#b39352] text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-[#C6A45C]/20 hover:shadow-[#C6A45C]/30 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-3 cursor-pointer"
             >
               {uploading ? (
-                <Loader2 className="animate-spin mx-auto" />
+                <>
+                  <Loader2 className="animate-spin" size={20} />
+                  <span>Processing...</span>
+                </>
               ) : (
-                "Publish Item"
+                "Create Menu Item"
               )}
             </button>
+            
+            <p className="text-center text-xs text-stone-400 px-4">
+              Review all details carefully. Once created, items will appear instantly on the customer-facing menu.
+            </p>
           </div>
+
         </form>
-      </div>
+      </main>
     </div>
   );
 }

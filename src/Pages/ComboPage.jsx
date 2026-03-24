@@ -1,119 +1,62 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  useRef,
-} from "react";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import {
-  Plus,
-  Minus,
-  Trash2,
-  Edit3,
-  Package,
-  CheckCircle2,
-  ShoppingBag,
-  AlertCircle,
-  Loader2,
-  X,
-} from "lucide-react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, Minus, Loader2, CheckCircle2, ArrowLeft, Trash2, Edit3, PackagePlus, X } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import axiosClient from "../api/axiosClient";
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 15 },
-  visible: { opacity: 1, y: 0 },
-};
-
-const MenuItemCard = React.memo(
-  ({ item, isChecked, onSelect, qty, updateQty, disabled }) => {
-    const shouldReduceMotion = useReducedMotion();
-
-    return (
-      <motion.div
-        layout={!shouldReduceMotion}
-        variants={itemVariants}
-        className={`group relative flex flex-col justify-between p-3 md:p-4 rounded-2xl border-2 transition-all duration-300 h-full
-        ${
-          isChecked
-            ? "border-[#C5A059] bg-[#C5A059]/5 shadow-md ring-1 ring-[#C5A059]/10"
-            : "border-gray-100 bg-white hover:border-gray-200 hover:shadow-lg"
-        } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
-      >
-        <div
-          onClick={() => !disabled && onSelect(item._id)}
-          className="flex flex-col gap-2 md:gap-3 cursor-pointer h-full"
-        >
-          <div className="flex items-start justify-between">
-            <div
-              className={`p-1.5 md:p-2 rounded-lg transition-colors ${isChecked ? "bg-[#C5A059] text-white" : "bg-gray-100 text-gray-400 group-hover:bg-gray-200"}`}
-            >
-              <CheckCircle2 size={16} />
-            </div>
-            {item.price && (
-              <span className="text-xs md:text-sm font-bold text-gray-900 bg-gray-100 px-2 py-1 rounded-md">
-                ₹{item.price}
-              </span>
-            )}
+// Memoized Card for Performance
+const MenuItemCard = React.memo(({ item, isChecked, onSelect, qty, updateQty }) => {
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`relative p-3 md:p-4 rounded-xl border transition-all duration-300 cursor-pointer flex flex-col justify-between h-full ${
+        isChecked ? "border-[#C6A45C] bg-[#C6A45C]/5 shadow-sm" : "border-gray-200 bg-white hover:border-[#C6A45C]/50"
+      }`}
+      onClick={() => !isChecked && onSelect(item._id)}
+    >
+      <div>
+        <div className="flex justify-between items-start mb-2">
+          <div className={`p-1 rounded-full ${isChecked ? "bg-[#C6A45C] text-white" : "bg-gray-100 text-gray-300"}`}>
+            <CheckCircle2 size={14} />
           </div>
-
-          <div className="flex flex-col min-w-0">
-            <span className="text-xs md:text-sm lg:text-base font-bold text-gray-800 line-clamp-2 leading-tight">
-              {item.name}
-            </span>
-          </div>
+          <span className="font-bold text-gray-700 text-xs md:text-sm">₹{item.price}</span>
         </div>
+        <p className="font-medium text-xs md:text-sm text-gray-800 leading-tight line-clamp-2">{item.name}</p>
+      </div>
 
-        <AnimatePresence>
-          {isChecked && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="mt-3 pt-3 border-t border-[#C5A059]/20"
-            >
-              <div className="flex items-center justify-between bg-white rounded-xl p-1 shadow-inner border border-gray-100">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    updateQty(item._id, -1);
-                  }}
-                  className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-red-500 transition-colors"
-                >
-                  <span className="sr-only">Decrease</span>
-                  <Minus size={14} strokeWidth={3} />
-                </button>
-                <span className="font-bold text-xs md:text-sm tabular-nums w-6 text-center">
-                  {qty}
-                </span>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    updateQty(item._id, 1);
-                  }}
-                  className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-lg hover:bg-green-50 text-green-600 transition-colors"
-                >
-                  <span className="sr-only">Increase</span>
-                  <Plus size={14} strokeWidth={3} />
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-    );
-  },
-);
-
-MenuItemCard.displayName = "MenuItemCard";
+      {isChecked && (
+        <div className="flex items-center justify-between mt-3 bg-white rounded-lg border border-[#C6A45C]/20 p-1 shadow-inner" onClick={(e) => e.stopPropagation()}>
+          <button 
+            type="button"
+            onClick={() => updateQty(item._id, -1)}
+            className="p-1 hover:bg-gray-100 rounded text-[#C6A45C]"
+          >
+            <Minus size={12} />
+          </button>
+          <span className="font-bold text-xs px-1 text-gray-700">{qty}</span>
+          <button 
+            type="button"
+            onClick={() => updateQty(item._id, 1)}
+            className="p-1 hover:bg-gray-100 rounded text-[#C6A45C]"
+          >
+            <Plus size={12} />
+          </button>
+        </div>
+      )}
+      
+      {isChecked && (
+        <button 
+          onClick={(e) => { e.stopPropagation(); onSelect(item._id); }}
+          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors"
+        >
+          <X size={10} />
+        </button>
+      )}
+    </motion.div>
+  );
+});
 
 export default function ComboPage() {
   const [menuItems, setMenuItems] = useState([]);
@@ -127,64 +70,76 @@ export default function ComboPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const formRef = useRef(null);
-  const shouldReduceMotion = useReducedMotion();
 
-  const isPriceValid = useMemo(() => {
-    const p = parseFloat(price);
-    return !isNaN(p) && p >= 100;
-  }, [price]);
-
-  const isFormValid = useMemo(
-    () => name.trim() !== "" && isPriceValid && selectedItems.length > 0,
-    [name, isPriceValid, selectedItems],
-  );
-
-  const fetchMenu = async () => {
-    const res = await axiosClient.get("/admin/dining/menu");
-    setMenuItems(res.data?.data || res.data || []);
+  const normalize = (res) => {
+    if (Array.isArray(res.data?.data)) return res.data.data;
+    if (Array.isArray(res.data?.data?.data)) return res.data.data.data;
+    if (Array.isArray(res.data)) return res.data;
+    return [];
   };
 
-  const fetchCombos = async () => {
-    const res = await axiosClient.get("/admin/dining/combos");
-    setCombos(res.data?.data || res.data || []);
+  const fetchData = async () => {
+    try {
+      const [m, c] = await Promise.all([
+        axiosClient.get("/admin/dining/menu"),
+        axiosClient.get("/admin/dining/combos"),
+      ]);
+      setMenuItems(normalize(m));
+      setCombos(normalize(c));
+    } catch (err) {
+      toast.error("Failed to load inventory");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
-    const init = async () => {
-      try {
-        await Promise.all([fetchMenu(), fetchCombos()]);
-      } catch (err) {
-        toast.error("Failed to load kitchen data");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    init();
+    fetchData();
   }, []);
 
-  const handleSelect = useCallback((itemId) => {
+  const handleSelect = useCallback((id) => {
     setSelectedItems((prev) => {
-      const exists = prev.find((i) => i.item === itemId);
-      if (exists) return prev.filter((i) => i.item !== itemId);
-      return [...prev, { item: itemId, quantity: 1 }];
+      const exists = prev.find((i) => i.item === id);
+      return exists ? prev.filter((i) => i.item !== id) : [...prev, { item: id, quantity: 1 }];
     });
   }, []);
 
-  const updateQty = useCallback((itemId, delta) => {
+  const updateQty = useCallback((id, delta) => {
     setSelectedItems((prev) =>
-      prev
-        .map((item) => {
-          if (item.item !== itemId) return item;
-          const newQty = item.quantity + delta;
-          return newQty <= 0 ? null : { ...item, quantity: newQty };
-        })
-        .filter(Boolean),
+      prev.map((i) => (i.item === id ? { ...i, quantity: Math.max(0, i.quantity + delta) } : i))
+          .filter((i) => i.quantity > 0)
     );
   }, []);
 
-  const getQty = (itemId) => {
-    const found = selectedItems.find((i) => i.item === itemId);
-    return found ? found.quantity : 1;
+  const getQty = (id) => selectedItems.find((i) => i.item === id)?.quantity || 1;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (selectedItems.length === 0) return toast.error("Select at least one item");
+
+    setIsSubmitting(true);
+    try {
+      const fd = new FormData();
+      fd.append("name", name);
+      fd.append("price", price);
+      fd.append("items", JSON.stringify(selectedItems));
+      images.forEach((img) => fd.append("images", img));
+
+      if (editingId) {
+        await axiosClient.put(`/admin/dining/combos/${editingId}`, fd);
+        toast.success("Combo updated");
+      } else {
+        await axiosClient.post("/admin/dining/combos", fd);
+        toast.success("Combo created");
+      }
+
+      fetchData();
+      resetForm();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Operation failed");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const resetForm = () => {
@@ -195,349 +150,202 @@ export default function ComboPage() {
     setEditingId(null);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!isFormValid) {
-      toast.error("Please fill all fields correctly");
-      return;
-    }
-    setIsSubmitting(true);
-    const loadingToast = toast.loading(
-      editingId ? "Updating combo..." : "Creating combo...",
-    );
-    try {
-      const formData = new FormData();
-      formData.append("name", name);
-      formData.append("price", price);
-      formData.append("items", JSON.stringify(selectedItems));
-      images.forEach((img) => {
-        formData.append("images", img);
-      });
+  const handleEdit = (c) => {
+    const safeItems = (c.items || [])
+      .filter((i) => i?.item)
+      .map((i) => ({
+        item: typeof i.item === "object" ? i.item._id : i.item,
+        quantity: i.quantity || 1,
+      }));
 
-      if (editingId) {
-        await axiosClient.put(`/admin/dining/combos/${editingId}`, formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-        toast.success("Combo updated successfully", { id: loadingToast });
-      } else {
-        await axiosClient.post("/admin/dining/combos", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-        toast.success("New combo launched!", { id: loadingToast });
-      }
-      await fetchCombos();
-      resetForm();
-    } catch (error) {
-      toast.error("Process failed", { id: loadingToast });
-    } finally {
-      setIsSubmitting(false);
-    }
+    setEditingId(c._id);
+    setName(c.name);
+    setPrice(c.price.toString());
+    setSelectedItems(safeItems);
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const confirmDelete = async (id) => {
-    const deleteToast = toast.loading("Deleting combo...");
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this combo?")) return;
     try {
       await axiosClient.delete(`/admin/dining/combos/${id}`);
       setCombos((prev) => prev.filter((c) => c._id !== id));
-      toast.success("Combo deleted successfully", { id: deleteToast });
+      toast.success("Combo removed");
     } catch (err) {
-      toast.error("Deletion failed. Please try again.", { id: deleteToast });
+      toast.error("Delete failed");
     }
-  };
-
-  const handleDeleteTrigger = (id) => {
-    toast(
-      (t) => (
-        <div className="flex flex-col gap-3">
-          <p className="text-sm font-semibold text-gray-800">
-            Are you sure you want to delete this combo?
-          </p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => {
-                toast.dismiss(t.id);
-                confirmDelete(id);
-              }}
-              className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-600 transition-colors"
-            >
-              Delete
-            </button>
-            <button
-              onClick={() => toast.dismiss(t.id)}
-              className="bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      ),
-      {
-        duration: 5000,
-        position: "top-center",
-        style: {
-          padding: "16px",
-          borderRadius: "16px",
-          border: "1px solid #fee2e2",
-        },
-      },
-    );
-  };
-
-  const handleEdit = (combo) => {
-    setEditingId(combo._id);
-    setName(combo.name);
-    setPrice(combo.price.toString());
-    const items = combo.items.map((i) => ({
-      item: i.item._id || i.item,
-      quantity: i.quantity,
-    }));
-    setSelectedItems(items);
-
-    formRef.current?.scrollIntoView({
-      behavior: shouldReduceMotion ? "auto" : "smooth",
-      block: "start",
-    });
-    toast.success("Editing mode active");
   };
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#FBFBFA]">
-        <Loader2 className="w-10 h-10 text-[#C5A059] animate-spin mb-4" />
-        <p className="text-gray-500 font-medium animate-pulse">
-          Loading your kitchen...
-        </p>
+      <div className="flex flex-col justify-center items-center h-screen bg-[#F9F9F9] p-4 text-center">
+        <Loader2 className="animate-spin text-[#C6A45C] mb-4" size={40} />
+        <p className="text-gray-500 font-medium tracking-wide">Fetching your delicious combinations...</p>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen w-full bg-[#FBFBFA] text-gray-900 pb-10 md:pb-20">
-      <Toaster position="top-right" reverseOrder={false} />
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
-        className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-12 max-w-[1600px]"
-      >
-        <header
-          ref={formRef}
-          className="mb-8 md:mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6 scroll-mt-20"
+    <main className="min-h-screen bg-[#F9F9F9] p-4 md:p-6 lg:p-10 text-gray-800">
+      <Toaster position="top-center" />
+      
+      <div className="max-w-7xl mx-auto">
+        {/* Navigation */}
+        <button 
+          onClick={() => window.history.back()}
+          className="flex items-center gap-2 text-gray-500 hover:text-[#C6A45C] transition-colors mb-6 group"
         >
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#C5A059]/10 text-[#C5A059] text-[10px] md:text-xs font-bold uppercase tracking-wider">
-              <Package size={14} /> Admin Portal
-            </div>
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight text-gray-900">
-              {editingId ? "Update" : "Create"}{" "}
-              <span className="text-[#C5A059]">Combo</span>
-            </h1>
-            <p className="text-gray-500 text-sm md:text-base lg:text-lg max-w-xl">
-              Design attractive bundles and manage your pricing for maximum
-              value.
-            </p>
-          </div>
-          {editingId && (
-            <button
-              onClick={resetForm}
-              className="flex items-center self-start md:self-auto gap-2 text-xs md:text-sm font-semibold text-red-500 hover:bg-red-50 px-4 py-2 rounded-xl transition-all border border-red-100"
-            >
-              <X size={16} /> Cancel Editing
-            </button>
-          )}
-        </header>
+          <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+          <span className="font-medium">Back to Dashboard</span>
+        </button>
 
-        <section className="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/40 overflow-hidden mb-12 md:mb-20">
-          <form onSubmit={handleSubmit} className="p-5 md:p-10 lg:p-14">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 mb-10 md:mb-12">
-              <div className="space-y-2">
-                <label className="text-xs md:text-sm font-bold text-gray-700 ml-1">
-                  Combo Title
-                </label>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* Form Section */}
+          <form
+            ref={formRef}
+            onSubmit={handleSubmit}
+            className="lg:col-span-5 bg-white p-5 md:p-8 rounded-2xl shadow-sm border border-gray-100 lg:sticky lg:top-8"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <PackagePlus className="text-[#C6A45C]" />
+              <h2 className="text-xl md:text-2xl font-bold">{editingId ? "Edit Combo" : "New Combo"}</h2>
+            </div>
+
+            <div className="space-y-5">
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1.5 block">Combo Name</label>
                 <input
-                  className="w-full bg-gray-50 border-2 border-transparent focus:border-[#C5A059] focus:bg-white rounded-2xl p-3 md:p-4 transition-all outline-none text-base md:text-lg font-medium shadow-sm"
-                  placeholder="e.g. Weekend Special Feast"
+                  type="text"
+                  placeholder="e.g. Weekend Special"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
                   required
+                  className="w-full border-gray-200 border p-3 rounded-xl focus:ring-2 focus:ring-[#C6A45C]/20 focus:border-[#C6A45C] outline-none transition-all bg-gray-50 text-sm"
+                  onChange={(e) => setName(e.target.value)}
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-xs md:text-sm font-bold text-gray-700 ml-1">
-                  Combo Price (₹)
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    className={`w-full bg-gray-50 border-2 rounded-2xl p-3 md:p-4 transition-all outline-none text-base md:text-lg font-bold pr-12 shadow-sm
-                      ${price && !isPriceValid ? "border-red-200 focus:border-red-400" : "border-transparent focus:border-[#C5A059] focus:bg-white"}`}
-                    placeholder="0.00"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    required
-                  />
-                  {!isPriceValid && price !== "" && (
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-red-500">
-                      <AlertCircle size={20} />
-                    </div>
-                  )}
-                </div>
-                <p
-                  className={`text-[10px] md:text-xs font-medium ml-1 transition-colors ${!isPriceValid && price !== "" ? "text-red-500" : "text-gray-400"}`}
-                >
-                  * Minimum required price is ₹100
-                </p>
+
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1.5 block">Price (₹)</label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="0.00"
+                  value={price}
+                  required
+                  className="w-full border-gray-200 border p-3 rounded-xl focus:ring-2 focus:ring-[#C6A45C]/20 focus:border-[#C6A45C] outline-none transition-all bg-gray-50 text-sm"
+                  onChange={(e) => setPrice(e.target.value)}
+                />
               </div>
-              <div className="space-y-2 lg:col-span-2">
+
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1.5 block">Images</label>
                 <input
                   type="file"
                   multiple
-                  accept="image/*"
-                  onChange={(e) => setImages(Array.from(e.target.files))}
-                  className="w-full bg-gray-50 border-2 border-transparent focus:border-[#C5A059] focus:bg-white rounded-2xl p-3 md:p-4 transition-all outline-none text-base md:text-lg font-medium shadow-sm"
+                  className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[#C6A45C]/10 file:text-[#C6A45C] hover:file:bg-[#C6A45C]/20 cursor-pointer"
+                  onChange={(e) => setImages([...e.target.files])}
                 />
               </div>
-            </div>
 
-            <div className="mb-10 md:mb-12">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg md:text-xl font-bold flex items-center gap-2">
-                  <ShoppingBag size={20} className="text-[#C5A059]" />
-                  Select Menu Items
-                  <span className="ml-2 bg-[#C5A059]/10 text-[#C5A059] text-[10px] md:text-xs px-2 py-1 rounded-full font-bold">
-                    {selectedItems.length} selected
-                  </span>
-                </h3>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 md:gap-4 lg:gap-5">
-                {menuItems.map((item) => (
-                  <MenuItemCard
-                    key={item._id}
-                    item={item}
-                    isChecked={selectedItems.some((s) => s.item === item._id)}
-                    qty={getQty(item._id)}
-                    updateQty={updateQty}
-                    onSelect={handleSelect}
-                  />
-                ))}
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 block">
+                  Select Items ({selectedItems.length})
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[250px] overflow-y-auto pr-2 overflow-x-hidden">
+                  {menuItems.map((item) => (
+                    <MenuItemCard
+                      key={item._id}
+                      item={item}
+                      isChecked={selectedItems.some((s) => s.item === item._id)}
+                      qty={getQty(item._id)}
+                      updateQty={updateQty}
+                      onSelect={handleSelect}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-4 border-t border-gray-100 pt-8 md:pt-10">
+            <div className="pt-4 space-y-3">
               <button
                 type="submit"
-                disabled={!isFormValid || isSubmitting}
-                className="w-full sm:w-auto bg-[#C5A059] disabled:bg-gray-200 disabled:cursor-not-allowed text-white px-8 md:px-12 py-4 md:py-5 rounded-2xl font-bold text-base md:text-lg shadow-xl shadow-[#C5A059]/20 hover:shadow-[#C5A059]/40 hover:-translate-y-1 active:translate-y-0 transition-all flex items-center justify-center gap-3"
+                disabled={isSubmitting}
+                className="w-full bg-[#C6A45C] hover:bg-[#b39352] text-white font-bold py-4 rounded-xl shadow-lg shadow-[#C6A45C]/20 transition-all active:scale-[0.98] flex justify-center items-center gap-2"
               >
-                {isSubmitting ? (
-                  <Loader2 className="animate-spin" size={22} />
-                ) : (
-                  <Package size={22} />
-                )}
-                {editingId ? "Update Combo" : "Launch New Combo"}
+                {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : editingId ? "Save Changes" : "Publish Combo"}
               </button>
+              
               {editingId && (
-                <p className="text-xs font-semibold text-gray-400">
-                  Currently modifying: {name}
-                </p>
+                <button 
+                  type="button"
+                  onClick={resetForm}
+                  className="w-full text-gray-400 text-xs hover:text-red-500 transition-colors py-1"
+                >
+                  Cancel Editing
+                </button>
               )}
             </div>
           </form>
-        </section>
 
-        <section>
-          <div className="flex items-center gap-4 mb-8">
-            <h2 className="text-xl md:text-3xl font-black text-gray-900 whitespace-nowrap">
-              Existing Combos
-            </h2>
-            <div className="h-px w-full bg-gray-200" />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-6">
-            <AnimatePresence mode="popLayout">
-              {combos.map((combo) => (
-                <motion.div
-                  layout={!shouldReduceMotion}
-                  key={combo._id}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="bg-white border border-gray-100 rounded-3xl p-5 md:p-6 shadow-sm hover:shadow-xl transition-all duration-300 group flex flex-col justify-between h-full"
-                >
-                  <div>
-                    {combo.images && combo.images.length > 0 && (
-                      <img
-                        src={combo.images[0].url}
-                        alt={combo.name}
-                        className="w-full h-40 object-cover rounded-xl mb-4"
-                      />
-                    )}
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="space-y-1 min-w-0">
-                        <h3 className="font-bold text-lg md:text-xl text-gray-800 group-hover:text-[#C5A059] transition-colors truncate">
-                          {combo.name}
-                        </h3>
-                        <p className="text-xl md:text-2xl font-black text-[#C5A059]">
-                          ₹{combo.price}
-                        </p>
+          {/* List Section */}
+          <div className="lg:col-span-7">
+            <h3 className="text-lg md:text-xl font-bold mb-6 flex items-center gap-2">
+              Current Combos <span className="text-sm font-normal text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{combos.length}</span>
+            </h3>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <AnimatePresence mode="popLayout">
+                {combos.map((c) => (
+                  <motion.div
+                    key={c._id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow"
+                  >
+                    <div>
+                      <div className="flex justify-between items-start gap-2">
+                        <h4 className="font-bold text-base md:text-lg text-gray-800 leading-tight">{c.name}</h4>
+                        <span className="text-[#C6A45C] font-black text-base whitespace-nowrap">₹{c.price}</span>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {c.items?.map((i, idx) => (
+                          <span key={idx} className="text-[10px] px-2 py-1 bg-gray-50 rounded-md text-gray-500 border border-gray-100">
+                            <span className="font-bold text-[#C6A45C]">{i.quantity}x</span> {i.item?.name || "Item"}
+                          </span>
+                        ))}
                       </div>
                     </div>
 
-                    <div className="bg-gray-50 rounded-2xl p-3 md:p-4 mb-6">
-                      <p className="text-[10px] uppercase tracking-widest font-bold text-gray-400 mb-3 flex items-center gap-2">
-                        Included Items ({combo.items.length})
-                      </p>
-                      <ul className="space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar">
-                        {combo.items.map((i, idx) => (
-                          <li
-                            key={idx}
-                            className="text-xs md:text-sm text-gray-600 flex justify-between gap-2 border-b border-gray-200/50 pb-1 last:border-0"
-                          >
-                            <span className="truncate">
-                              • {i.item.name || "Unknown Item"}
-                            </span>
-                            <span className="font-bold text-[#C5A059] whitespace-nowrap">
-                              x{i.quantity}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
+                    <div className="flex gap-2 mt-6 pt-4 border-t border-gray-50">
+                      <button
+                        onClick={() => handleEdit(c)}
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-50 text-gray-600 hover:bg-[#C6A45C]/10 hover:text-[#C6A45C] transition-all font-semibold text-xs"
+                      >
+                        <Edit3 size={14} /> Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(c._id)}
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all font-semibold text-xs"
+                      >
+                        <Trash2 size={14} /> Delete
+                      </button>
                     </div>
-                  </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
 
-                  <div className="grid grid-cols-2 gap-3 mt-auto">
-                    <button
-                      onClick={() => handleEdit(combo)}
-                      className="flex items-center justify-center gap-2 px-3 py-3 bg-gray-100 hover:bg-[#C5A059] hover:text-white text-gray-600 rounded-xl font-bold text-xs md:text-sm transition-all"
-                    >
-                      <Edit3 size={14} /> Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteTrigger(combo._id)}
-                      className="flex items-center justify-center gap-2 px-3 py-3 bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-xl font-bold text-xs md:text-sm transition-all"
-                    >
-                      <Trash2 size={14} /> Delete
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-
-          {combos.length === 0 && (
-            <div className="text-center py-16 md:py-24 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
-              <Package className="w-12 h-12 md:w-16 md:h-16 text-gray-200 mx-auto mb-4" />
-              <p className="text-gray-400 text-base md:text-lg font-medium">
-                No combos found. Start by creating one above.
-              </p>
+              {combos.length === 0 && (
+                <div className="col-span-full py-20 text-center bg-white rounded-3xl border-2 border-dashed border-gray-100">
+                  <p className="text-gray-400 font-medium">No combos found. Start by creating one!</p>
+                </div>
+              )}
             </div>
-          )}
-        </section>
-      </motion.div>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }

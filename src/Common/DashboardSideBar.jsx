@@ -44,6 +44,7 @@ export default function Sidebar() {
 
    const diningSubMenu = [
     { name: "Categories", path: "/admin/categories", icon: <Layers size={18} /> },
+     { name: "Subcategories", path: "/admin/subcategories", icon: <Layers size={18} /> },
     { name: "Menu List", path: "/admin/dining-images", icon: <List size={18} /> },
     { name: "Add Item", path: "/admin/add-item", icon: <PlusCircle size={18} /> },
     { name: "Live Orders", path: "/admin/orders", icon: <ShoppingCart size={18} /> },

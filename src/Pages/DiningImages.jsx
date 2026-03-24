@@ -1,40 +1,57 @@
-/* eslint-disable no-unused-vars */
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axiosClient from "@/api/axiosClient";
-import { useRef } from "react";
-import {
-  Loader2,
-  Plus,
-  UtensilsCrossed,
-  IndianRupee,
-  Trash2,
-  RotateCcw,
-  Power,
-} from "lucide-react";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { Loader2, ChevronLeft, LayoutGrid } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
 
 export default function DiningImages() {
-  const navigate = useNavigate();
-  const shouldReduceMotion = useReducedMotion();
-  const scrollRef = useRef(null);
   const [menuItems, setMenuItems] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [subcategories, setSubcategories] = useState([]);
   const [activeCategory, setActiveCategory] = useState("All");
+  const [activeSubCategory, setActiveSubCategory] = useState("All");
+  const [loading, setLoading] = useState(true);
+
+  // ✅ Safe ID extractor
+  const getId = (field) => {
+    if (!field) return null;
+    return typeof field === "object" ? field?._id : field;
+  };
+
+  // ✅ Ultra-safe image handler (array + object support)
+  const getImageUrl = (item) => {
+    if (Array.isArray(item?.images)) return item.images[0]?.url;
+    if (typeof item?.images === "object") return item.images?.url;
+    return null;
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [menuRes, catRes] = await Promise.all([
+      const [menuRes, catRes, subRes] = await Promise.all([
         axiosClient.get("/admin/dining/menu"),
         axiosClient.get("/admin/dining/categories"),
+        axiosClient.get("/admin/dining/subcategories"),
       ]);
-      setMenuItems(menuRes.data.data || []);
-      setCategories(catRes.data.data || []);
-    } catch (error) {
-      toast.error("Failed to sync menu data");
+
+      setMenuItems(
+        Array.isArray(menuRes?.data?.data?.data)
+          ? menuRes.data.data.data
+          : []
+      );
+
+      setCategories(
+        Array.isArray(catRes?.data?.data) ? catRes.data.data : []
+      );
+
+      setSubcategories(
+        Array.isArray(subRes?.data?.data) ? subRes.data.data : []
+      );
+
+    } catch (err) {
+      toast.error("Failed to sync dining data");
+      setMenuItems([]);
+      setCategories([]);
+      setSubcategories([]);
     } finally {
       setLoading(false);
     }
@@ -44,303 +61,211 @@ export default function DiningImages() {
     fetchData();
   }, [fetchData]);
 
-  const executeDelete = async (id, name) => {
-    toast.dismiss();
-    try {
-      await axiosClient.delete(`/admin/dining/menu/${id}`);
-      toast.success(`${name} moved to trash`);
-      setMenuItems((prev) =>
-        prev.map((i) => (i._id === id ? { ...i, isDeleted: true } : i)),
-      );
-    } catch {
-      toast.error(`Could not delete ${name}`);
-    }
-  };
+  // ✅ Filter subcategories
+  const filteredSubCategories = useMemo(() => {
+    if (!Array.isArray(subcategories)) return [];
+    if (activeCategory === "All") return subcategories;
 
-  const deleteItem = (id, name) => {
-    toast(
-      (t) => (
-        <div className="flex flex-col gap-3 p-1">
-          <p className="text-sm font-semibold text-slate-800">
-            Delete <span className="text-red-500">{name}</span>?
-          </p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => {
-                executeDelete(id, name);
-                toast.dismiss(t.id);
-              }}
-              className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-600 transition-colors"
-            >
-              Delete
-            </button>
-            <button
-              onClick={() => toast.dismiss(t.id)}
-              className="bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-200 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      ),
-      {
-        duration: 4000,
-        position: "top-center",
-        style: { border: "1px solid #fee2e2", padding: "12px" },
-      },
+    return subcategories.filter(
+      (sub) => getId(sub.category) === activeCategory
     );
-  };
+  }, [subcategories, activeCategory]);
 
-  const restoreItem = async (id, name) => {
-    try {
-      await axiosClient.patch(`/admin/dining/menu/${id}/restore`);
-      toast.success(`${name} restored successfully`);
-      setMenuItems((prev) =>
-        prev.map((i) => (i._id === id ? { ...i, isDeleted: false } : i)),
-      );
-    } catch {
-      toast.error(`Failed to restore ${name}`);
-    }
-  };
-
-  const toggleAvailability = async (item) => {
-    const newStatus = !item.isAvailable;
-    try {
-      await axiosClient.patch(`/admin/dining/menu/${item._id}/availability`, {
-        isAvailable: newStatus,
-      });
-
-      if (newStatus) {
-        toast.success(`${item.name} is now Available`);
-      } else {
-        toast.error(`${item.name} marked as Not Available`);
-      }
-
-      setMenuItems((prev) =>
-        prev.map((i) =>
-          i._id === item._id ? { ...i, isAvailable: newStatus } : i,
-        ),
-      );
-    } catch {
-      toast.error("Update failed");
-    }
-  };
-
+  // ✅ Filter menu items
   const filteredItems = useMemo(() => {
-    if (activeCategory === "All") return menuItems;
-    return menuItems.filter((item) => item.category?.name === activeCategory);
-  }, [menuItems, activeCategory]);
+    if (!Array.isArray(menuItems)) return [];
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: shouldReduceMotion ? 0 : 0.05 },
-    },
-  };
+    let items = menuItems;
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 15 },
-    visible: { opacity: 1, y: 0 },
-  };
+    if (activeCategory !== "All") {
+      items = items.filter(
+        (item) => getId(item?.subCategory?.category) === activeCategory
+      );
+    }
+
+    if (activeSubCategory !== "All") {
+      items = items.filter(
+        (item) => getId(item?.subCategory) === activeSubCategory
+      );
+    }
+
+    return items;
+  }, [menuItems, activeCategory, activeSubCategory]);
+
+  // ✅ Button component
+  const FilterButton = ({ active, onClick, children }) => (
+    <button
+      onClick={onClick}
+      className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 whitespace-nowrap border cursor-pointer ${
+        active
+          ? "bg-[#C6A45C] border-[#C6A45C] text-white shadow-md transform scale-105"
+          : "bg-white border-gray-200 text-gray-600 hover:border-[#C6A45C] hover:text-[#C6A45C]"
+      }`}
+    >
+      {children}
+    </button>
+  );
 
   return (
-    <div className="min-h-screen bg-[#FFFFFF] text-slate-900">
+    <div className="min-h-screen bg-[#FDFCF9] text-gray-900 font-sans selection:bg-[#C6A45C]/20">
       <Toaster
         position="top-right"
         toastOptions={{
-          duration: 2500,
+          duration: 3000,
           style: {
-            borderRadius: "12px",
             background: "#fff",
             color: "#333",
-            fontWeight: "500",
-            boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
+            border: "1px solid #C6A45C",
           },
         }}
       />
 
-      <main className="max-w-[1600px] mx-auto px-4 sm:px-10 py-8">
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
-          <div className="flex items-center gap-4">
-            <div className="bg-[#C5A059] p-3 rounded-2xl text-white shadow-lg shadow-[#C5A059]/20">
-              <UtensilsCrossed size={24} />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-800">
-                Menu Control
-              </h1>
-              <p className="text-sm text-slate-500 font-medium">
-                Manage your culinary offerings
-              </p>
-            </div>
-          </div>
-
+      {/* HEADER */}
+      <header className="top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 h-16 sm:h-20 flex justify-between items-center">
           <button
-            onClick={() => navigate("/admin/add-item")}
-            className="cursor-pointer flex items-center justify-center gap-2 bg-[#C5A059] hover:bg-[#b38f4d] text-white px-6 py-3 rounded-xl font-bold transition-all active:scale-95"
+            onClick={() => window.history.back()}
+            className="group flex items-center gap-1.5 text-gray-600 hover:text-[#C6A45C]"
           >
-            <Plus size={20} />
-            <span>Add Item</span>
-          </button>
-        </header>
-
-        <nav className="mb-12">
-          <div className="flex items-center gap-6 sm:gap-10 overflow-x-auto py-6 px-2 scrollbar-hide">
-            <CategoryCircle
-              name="All"
-              isActive={activeCategory === "All"}
-              onClick={() => setActiveCategory("All")}
+            <ChevronLeft
+              size={20}
+              className="group-hover:-translate-x-1 transition-transform"
             />
-            {categories.map((cat) => (
-              <CategoryCircle
-                key={cat._id}
-                name={cat.name}
-                image={cat.image?.url}
-                isActive={activeCategory === cat.name}
-                onClick={() => setActiveCategory(cat.name)}
-              />
-            ))}
-          </div>
-        </nav>
+            <span className="text-sm font-medium uppercase tracking-wider">
+              Back
+            </span>
+          </button>
 
+          <div className="flex items-center gap-2">
+            <LayoutGrid size={18} className="text-[#C6A45C]" />
+            <h1 className="text-base sm:text-lg font-bold uppercase">
+              Dining Gallery
+            </h1>
+          </div>
+
+          <div className="w-16 hidden sm:block" />
+        </div>
+      </header>
+
+      {/* MAIN */}
+      <main className="max-w-7xl mx-auto px-4 py-6 sm:py-10">
+        {/* FILTERS */}
+        <section className="space-y-6 mb-10">
+          <div className="flex flex-col gap-4">
+            {/* Categories */}
+          <div className="flex gap-2 overflow-x-auto py-3 px-1 -mx-1 no-scrollbar">
+              <FilterButton
+                active={activeCategory === "All"}
+                onClick={() => {
+                  setActiveCategory("All");
+                  setActiveSubCategory("All");
+                }}
+              >
+                All
+              </FilterButton>
+
+              {categories.map((cat) => (
+                <FilterButton
+                  key={cat._id}
+                  active={activeCategory === cat._id}
+                  onClick={() => {
+                    setActiveCategory(cat._id);
+                    setActiveSubCategory("All");
+                  }}
+                >
+                  {cat.name}
+                </FilterButton>
+              ))}
+            </div>
+
+            {/* Subcategories */}
+            <div className="flex gap-2 overflow-x-auto py-3 px-1 -mx-1 no-scrollbar border-t pt-4">
+              <FilterButton
+                active={activeSubCategory === "All"}
+                onClick={() => setActiveSubCategory("All")}
+              >
+                All Sub-Types
+              </FilterButton>
+
+              {filteredSubCategories.map((sub) => (
+                <FilterButton
+                  key={sub._id}
+                  active={activeSubCategory === sub._id}
+                  onClick={() => setActiveSubCategory(sub._id)}
+                >
+                  {sub.name}
+                </FilterButton>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* LOADING */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <Loader2 className="animate-spin text-[#C5A059]" size={40} />
-            <p className="text-[#C5A059] font-medium">Loading menu...</p>
+          <div className="flex flex-col items-center py-32 gap-4">
+            <Loader2 className="animate-spin text-[#C6A45C]" size={40} />
+            <p className="text-gray-400 text-sm">Loading...</p>
           </div>
         ) : (
-          <motion.div
-            key={activeCategory}
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 sm:gap-8"
-          >
-            <AnimatePresence mode="popLayout">
-              {filteredItems.map((item) => (
-                <motion.div
-                  layout
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredItems.length === 0 ? (
+              <div className="col-span-full py-20 text-center">
+                <LayoutGrid className="text-gray-300 mx-auto mb-3" size={32} />
+                <h3 className="text-gray-500">No menu items found</h3>
+              </div>
+            ) : (
+              filteredItems.map((item) => (
+                <div
                   key={item._id}
-                  variants={itemVariants}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="bg-white rounded-[2rem] overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full"
+                  className="group bg-white rounded-2xl overflow-hidden border shadow-sm hover:shadow-xl transition"
                 >
-                  <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+                  <div className="relative aspect-[4/3] bg-gray-100">
+                    {/* ✅ FIXED IMAGE */}
                     <img
                       src={
-                        item.images?.[0]?.url ||
-                        "https://placehold.co/600x450?text=No+Image"
+                        getImageUrl(item) ||
+                        "https://placehold.co/600x400?text=No+Image"
                       }
-                      alt={item.name}
-                      className={`w-full h-full object-cover transition-opacity ${!item.isAvailable ? "grayscale opacity-50" : ""}`}
+                      alt={item?.name || "Dining Item"}
+                      className="w-full h-full object-cover group-hover:scale-110 transition"
+                      loading="lazy"
                     />
-                    <div className="absolute top-4 right-4 bg-white/95 backdrop-blur px-3 py-1 rounded-xl text-[#C5A059] font-bold flex items-center gap-1 text-sm border border-slate-100">
-                      <IndianRupee size={14} />
-                      {item.basePrice}
-                    </div>
-                    {!item.isAvailable && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-lg shadow-lg">
-                          Not Available
-                        </span>
-                      </div>
-                    )}
-                  </div>
 
-                  <div className="p-5 flex flex-col flex-grow gap-4">
-                    <div className="flex-grow">
-                      <h3 className="font-bold text-slate-800 text-lg leading-tight mb-1">
-                        {item.name}
-                      </h3>
-                      <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                        {item.category?.name || "Uncategorized"}
+                    <div className="absolute top-3 right-3">
+                      <span className="bg-white px-3 py-1 rounded-full text-xs font-bold text-[#C6A45C]">
+                        {item?.subCategory?.name || "Dining"}
                       </span>
                     </div>
+                  </div>
 
-                    <div className="flex justify-between items-center pt-4 border-t border-slate-50">
-                      <button
-                        onClick={() => toggleAvailability(item)}
-                        className={`cursor-pointer p-2 rounded-lg transition-all active:scale-90
-                        ${
-                          item.isAvailable
-                            ? "bg-green-50 text-green-600 hover:bg-green-100"
-                            : "bg-red-50 text-red-600 hover:bg-red-100"
-                        }`}
-                        title={
-                          item.isAvailable
-                            ? "Mark Unavailable"
-                            : "Mark Available"
-                        }
-                      >
-                        <Power size={18} strokeWidth={2.5} />
-                      </button>
+                  <div className="p-5">
+                    <h3 className="font-bold">{item?.name}</h3>
 
-                      <div className="flex items-center gap-2">
-                        {item.isDeleted ? (
-                          <button
-                            onClick={() => restoreItem(item._id, item.name)}
-                            className="cursor-pointer p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
-                          >
-                            <RotateCcw size={18} strokeWidth={2.5} />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => deleteItem(item._id, item.name)}
-                            className="cursor-pointer p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
-                          >
-                            <Trash2 size={18} strokeWidth={2.5} />
-                          </button>
-                        )}
-                      </div>
+                    <div className="mt-3 flex justify-between">
+                      <span className="text-xs text-gray-400">
+                        Base Price
+                      </span>
+                      <span className="font-bold">
+                        ₹{item?.basePrice?.toLocaleString("en-IN") || 0}
+                      </span>
                     </div>
                   </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </motion.div>
-        )}
-      </main>
-    </div>
-  );
-}
-
-function CategoryCircle({ name, image, isActive, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className="group cursor-pointer flex flex-col items-center gap-3 shrink-0 focus:outline-none"
-    >
-      <div className="relative overflow-visible">
-        <div
-          className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full transition-all duration-300 p-1 border-2
-          ${
-            isActive
-              ? "border-[#C5A059] shadow-xl shadow-[#C5A059]/30 scale-110 z-10"
-              : "border-transparent opacity-60 hover:opacity-100 group-hover:scale-105"
-          }`}
-        >
-          <div className="w-full h-full rounded-full overflow-hidden shadow-inner">
-            {image ? (
-              <img
-                src={image}
-                alt={name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-[#EFEAE1] flex items-center justify-center text-[#C5A059] text-xl font-bold">
-                {name[0]}
-              </div>
+                </div>
+              ))
             )}
           </div>
-        </div>
-      </div>
-      <span
-        className={`text-[10px] sm:text-xs tracking-widest uppercase font-bold transition-colors
-      ${isActive ? "text-[#C5A059]" : "text-slate-400 group-hover:text-slate-600"}`}
-      >
-        {name}
-      </span>
-    </button>
+        )}
+      </main>
+
+      {/* SCROLLBAR HIDE */}
+      <style jsx global>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          scrollbar-width: none;
+        }
+      `}</style>
+    </div>
   );
 }

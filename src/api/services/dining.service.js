@@ -1,5 +1,4 @@
 import axiosClient from "@/api/axiosClient";
-
 export const getCategories = async () => {
   const res = await axiosClient.get("/admin/dining/categories");
   return res?.data?.data ?? [];
@@ -56,4 +55,32 @@ export const createMenuItem = async (formData) => {
 export const deleteMenuItem = async (id) => {
   const res = await axiosClient.delete(`/admin/dining/menu/${id}`);
   return res?.data;
+};
+
+
+export const getSubCategories = async () => {
+  const res = await axiosClient.get("/admin/dining/subcategories");
+  return res.data.data;
+};
+
+export const createSubCategory = async (data) => {
+  const res = await axiosClient.post("/admin/dining/subcategories", data);
+  return res.data;
+};
+
+/* ================= SUBCATEGORY ================= */
+
+export const deleteSubCategory = async (id) => {
+  const res = await axiosClient.delete(
+    `/admin/dining/subcategories/${id}`   // ✅ FIXED
+  );
+  return res?.data;
+};
+
+export const updateSubCategory = async ({ id, payload }) => {
+  const res = await axiosClient.patch(   // ✅ FIXED (PUT → PATCH)
+    `/admin/dining/subcategories/${id}`,
+    payload
+  );
+  return res?.data?.data;
 };
