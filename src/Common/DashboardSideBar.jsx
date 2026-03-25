@@ -43,6 +43,7 @@ export default function Sidebar() {
   ];
 
    const diningSubMenu = [
+    { name: "Online Ordering", path: "/admin/availability", icon: <Gift size={18} /> },
     { name: "Categories", path: "/admin/categories", icon: <Layers size={18} /> },
      { name: "Subcategories", path: "/admin/subcategories", icon: <Layers size={18} /> },
     { name: "Menu List", path: "/admin/dining-images", icon: <List size={18} /> },
@@ -52,6 +53,7 @@ export default function Sidebar() {
     { name: "Daily Roster", path: "/admin/daily-roster", icon: <Clock size={18} /> },
     { name: "Add Combo", path: "/admin/combos", icon: <Layers size={18} /> },
     { name: "Create Offer", path: "/admin/offersdining", icon: <Gift size={18} /> },
+       
     { name: "Riders", path: "/admin/riders", icon: <Bike size={18} /> },
   ];
   const handleLogout = async () => {

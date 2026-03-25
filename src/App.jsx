@@ -102,7 +102,7 @@ export default function App() {
           <Route path="riders" element={<Riders />} />
   <Route path="availability" element={<Availability />} />
           <Route path="subcategories" element={<SubCategories />} />
-          <Route path="admin-rooms" element={<AdminRooms />} />
+          <Route path="add-rooms" element={<AdminRooms />} />
 
         </Route>
 

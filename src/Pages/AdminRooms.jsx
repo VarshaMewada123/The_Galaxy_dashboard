@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast, Toaster } from "react-hot-toast";
-import { ArrowLeft, Upload, Trash2, Edit3, X, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Upload, Trash2, Edit3, X, AlertTriangle } from "lucide-react";
 import {
   getRooms,
   createRoom,
@@ -11,9 +11,42 @@ import {
 
 const BASE_URL = "http://localhost:5000";
 
+// --- Custom Delete Confirmation Modal ---
+const DeleteModal = ({ isOpen, onClose, onConfirm, roomName }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-[#C6A45C]/20">
+        <div className="flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mb-4 mx-auto">
+          <AlertTriangle className="text-red-600" size={24} />
+        </div>
+        <h3 className="text-xl font-bold text-center text-slate-800 mb-2 curs">Delete Room?</h3>
+        <p className="text-slate-500 text-center mb-6">
+          Are you sure you want to delete <span className="font-semibold text-slate-700">"{roomName}"</span>? This action cannot be undone.
+        </p>
+        <div className="flex gap-3">
+          <button 
+            onClick={onClose}
+            className="flex-1 py-3 rounded-xl font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button 
+            onClick={onConfirm}
+            className="flex-1 py-3 rounded-xl font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors cursor-pointer"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function AdminRooms() {
   const queryClient = useQueryClient();
 
+  // State
   const [form, setForm] = useState({
     name: "",
     price: "",
@@ -28,12 +61,16 @@ export default function AdminRooms() {
   const [files, setFiles] = useState([]);
   const [preview, setPreview] = useState([]);
   const [editId, setEditId] = useState(null);
+  
+  // Modal State
+  const [deleteModal, setDeleteModal] = useState({ show: false, id: null, name: "" });
 
-  const { data: rooms = [] } = useQuery({
+  const { data: rooms = [], isLoading } = useQuery({
     queryKey: ["rooms"],
     queryFn: getRooms,
   });
 
+  // Mutations
   const createMutation = useMutation({
     mutationFn: createRoom,
     onSuccess: () => {
@@ -41,7 +78,7 @@ export default function AdminRooms() {
       toast.success("Room created successfully");
       resetForm();
     },
-    onError: () => toast.error("Error creating room"),
+    onError: () => toast.error("Failed to create room"),
   });
 
   const updateMutation = useMutation({
@@ -59,9 +96,18 @@ export default function AdminRooms() {
     onSuccess: () => {
       queryClient.invalidateQueries(["rooms"]);
       toast.success("Room deleted");
+      setDeleteModal({ show: false, id: null, name: "" });
     },
     onError: () => toast.error("Delete failed"),
   });
+
+  // Helper: Prevent Negative Typing
+  const handleNumericInput = (e, field) => {
+    const value = e.target.value;
+    if (value === "" || (Number(value) >= 0 && !value.includes('-'))) {
+      setForm({ ...form, [field]: value });
+    }
+  };
 
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
@@ -72,41 +118,21 @@ export default function AdminRooms() {
 
   const resetForm = () => {
     setForm({
-      name: "",
-      price: "",
-      size: "",
-      roomType: "Suite",
-      maxGuests: "",
-      bedType: "King",
-      description: "",
-      amenities: "",
+      name: "", price: "", size: "", roomType: "Suite",
+      maxGuests: "", bedType: "King", description: "", amenities: "",
     });
     setFiles([]);
     setPreview([]);
     setEditId(null);
   };
 
-  const preventInvalidNumber = (e) => {
-    if (["e", "E", "-", "+", "."].includes(e.key)) {
-      e.preventDefault();
-    }
-  };
-
-  const handleNumberInput = (key, value, isInteger = false) => {
-    let cleanValue = value.replace(/[^0-9.]/g, "");
-    if (isInteger) cleanValue = value.replace(/[^0-9]/g, "");
-    
-    if (parseFloat(cleanValue) < 0) cleanValue = "0";
-    setForm({ ...form, [key]: cleanValue });
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!form.name || !form.price || !form.maxGuests) {
-      toast.error("Please fill all required fields");
-      return;
-    }
+    if (!form.name.trim()) return toast.error("Room name is required");
+    if (!form.price || Number(form.price) <= 0) return toast.error("Please enter a valid price greater than 0");
+    if (!form.maxGuests || Number(form.maxGuests) <= 0) return toast.error("Max guests must be at least 1");
+    if (!editId && files.length === 0) return toast.error("Please upload at least one image");
 
     const formData = new FormData();
     Object.keys(form).forEach((key) => formData.append(key, form[key]));
@@ -131,37 +157,50 @@ export default function AdminRooms() {
       amenities: Array.isArray(room.amenities) ? room.amenities.join(",") : room.amenities,
     });
     setEditId(room._id);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    
+    // Smooth scroll to top when edit is clicked
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
   };
 
-  const inputStyle = "w-full border border-[#C6A45C]/40 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C6A45C] bg-white transition-all text-slate-700 placeholder:text-slate-300";
-  const labelStyle = "text-xs font-bold text-[#C6A45C] mb-1.5 block uppercase tracking-widest";
+  const inputStyle = "w-full border border-[#C6A45C]/30 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C6A45C] bg-white transition-all duration-200 text-slate-700";
+  const labelStyle = "text-sm font-semibold text-[#C6A45C] mb-1 block uppercase tracking-wider";
 
   return (
-    <div className="min-h-screen bg-[#F9F8F6] pb-24 text-slate-800">
-      <Toaster position="bottom-center" />
+    <div className="min-h-screen bg-[#F9F8F6] pb-20">
+      <Toaster position="top-right" />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
-        <div className="flex items-center gap-4 mb-10">
-          <button 
-            onClick={() => window.history.back()}
-            className="p-2.5 hover:bg-[#C6A45C]/10 rounded-full transition-colors cursor-pointer border border-transparent hover:border-[#C6A45C]/20"
-          >
-            <ArrowLeft className="text-[#C6A45C]" size={22} />
-          </button>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#C6A45C] tracking-tight">
-            {editId ? "Update Room" : "Room Management"}
-          </h1>
+      <DeleteModal 
+        isOpen={deleteModal.show}
+        roomName={deleteModal.name}
+        onClose={() => setDeleteModal({ show: false, id: null, name: "" })}
+        onConfirm={() => deleteMutation.mutate(deleteModal.id)}
+      />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => window.history.back()}
+              className="p-2 hover:bg-[#C6A45C]/10 rounded-full transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="text-[#C6A45C]" size={24} />
+            </button>
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#C6A45C] tracking-tight">
+              {editId ? "Edit Room" : "Add New Room"}
+            </h1>
+          </div>
         </div>
 
-        <section className="bg-white rounded-3xl shadow-xl shadow-[#C6A45C]/5 border border-[#C6A45C]/10 p-6 sm:p-10 mb-16">
-          <form onSubmit={handleSubmit} className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
-              
-              <div className="lg:col-span-2">
-                <label className={labelStyle}>Room Title *</label>
+        <section className="bg-white rounded-2xl shadow-sm border border-[#C6A45C]/10 p-6 mb-12">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div>
+                <label className={labelStyle}>Room Name *</label>
                 <input
-                  placeholder="e.g. Royal Emperor Suite"
+                  placeholder="e.g. Presidential Suite"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   className={inputStyle}
@@ -173,33 +212,31 @@ export default function AdminRooms() {
                 <input
                   type="number"
                   min="0"
-                  onKeyDown={preventInvalidNumber}
-                  placeholder="0"
+                  placeholder="0.00"
                   value={form.price}
-                  onChange={(e) => handleNumberInput("price", e.target.value, true)}
+                  onChange={(e) => handleNumericInput(e, 'price')}
                   className={inputStyle}
                 />
               </div>
 
               <div>
-                <label className={labelStyle}>Total Guests *</label>
+                <label className={labelStyle}>Room Size (sq ft)</label>
                 <input
                   type="number"
-                  min="1"
-                  onKeyDown={preventInvalidNumber}
-                  placeholder="Max occupancy"
-                  value={form.maxGuests}
-                  onChange={(e) => handleNumberInput("maxGuests", e.target.value, true)}
+                  min="0"
+                  placeholder="e.g. 450"
+                  value={form.size}
+                  onChange={(e) => handleNumericInput(e, 'size')}
                   className={inputStyle}
                 />
               </div>
 
               <div>
-                <label className={labelStyle}>Room Category</label>
+                <label className={labelStyle}>Room Type</label>
                 <select
                   value={form.roomType}
                   onChange={(e) => setForm({ ...form, roomType: e.target.value })}
-                  className={`${inputStyle} cursor-pointer appearance-none bg-no-repeat bg-right pr-10`}
+                  className={`${inputStyle} cursor-pointer`}
                 >
                   <option>Suite</option>
                   <option>Deluxe</option>
@@ -208,7 +245,18 @@ export default function AdminRooms() {
               </div>
 
               <div>
-                <label className={labelStyle}>Bedding Arrangement</label>
+                <label className={labelStyle}>Max Guests *</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={form.maxGuests}
+                  onChange={(e) => handleNumericInput(e, 'maxGuests')}
+                  className={inputStyle}
+                />
+              </div>
+
+              <div>
+                <label className={labelStyle}>Bed Type</label>
                 <select
                   value={form.bedType}
                   onChange={(e) => setForm({ ...form, bedType: e.target.value })}
@@ -220,57 +268,48 @@ export default function AdminRooms() {
                 </select>
               </div>
 
-              <div className="lg:col-span-3">
-                <label className={labelStyle}>Room Amenities</label>
+              <div className="md:col-span-2 lg:col-span-3">
+                <label className={labelStyle}>Amenities (Comma separated)</label>
                 <input
-                  placeholder="High-speed WiFi, Mini Bar, Ocean View, Bath Tub"
+                  placeholder="WiFi, Mini Bar, Sea View..."
                   value={form.amenities}
                   onChange={(e) => setForm({ ...form, amenities: e.target.value })}
                   className={inputStyle}
                 />
               </div>
 
-              <div className="lg:col-span-3">
-                <label className={labelStyle}>Detailed Description</label>
+              <div className="md:col-span-2 lg:col-span-3">
+                <label className={labelStyle}>Description</label>
                 <textarea
-                  rows="4"
-                  placeholder="Describe the luxury features and unique selling points..."
+                  rows="3"
+                  placeholder="Describe the room details..."
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className={`${inputStyle} resize-none`}
+                  className={inputStyle}
                 />
               </div>
 
-              <div className="lg:col-span-3">
-                <label className={labelStyle}>Gallery Upload</label>
-                <div className="relative group border-2 border-dashed border-[#C6A45C]/30 rounded-2xl p-10 text-center hover:bg-[#F9F8F6] transition-all cursor-pointer">
+              <div className="md:col-span-2 lg:col-span-3">
+                <label className={labelStyle}>Room Images</label>
+                <div className="relative border-2 border-dashed border-[#C6A45C]/30 rounded-xl p-8 text-center hover:bg-[#F9F8F6] transition-colors cursor-pointer group">
                   <input 
                     type="file" 
                     multiple 
                     onChange={handleFileChange} 
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />
-                  <div className="flex flex-col items-center">
-                    <div className="p-4 bg-[#C6A45C]/10 rounded-full mb-4 group-hover:bg-[#C6A45C] group-hover:text-white transition-all">
-                      <Upload size={28} />
-                    </div>
-                    <p className="font-semibold text-[#C6A45C]">Drop images here or click to browse</p>
-                    <p className="text-slate-400 text-sm mt-1">High resolution PNG or JPG preferred</p>
-                  </div>
+                  <Upload className="mx-auto text-[#C6A45C] mb-2 group-hover:scale-110 transition-transform" size={32} />
+                  <p className="text-slate-500">Click to upload or drag and drop images</p>
                 </div>
 
                 {preview.length > 0 && (
-                  <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-8 gap-4 mt-8">
+                  <div className="flex gap-4 mt-6 flex-wrap">
                     {preview.map((img, i) => (
-                      <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-[#C6A45C]/20 shadow-sm">
-                        <img src={img} className="w-full h-full object-cover" />
-                        <button 
-                          type="button" 
-                          onClick={() => setPreview(preview.filter((_, idx) => idx !== i))}
-                          className="absolute top-1 right-1 bg-white/90 text-red-500 p-1 rounded-full shadow-md cursor-pointer hover:bg-red-500 hover:text-white transition-all"
-                        >
-                          <X size={14}/>
-                        </button>
+                      <div key={i} className="relative group">
+                        <img src={img} className="w-24 h-24 object-cover rounded-lg border border-[#C6A45C]/20 shadow-sm" />
+                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                            <button type="button" onClick={() => setPreview(preview.filter((_, idx) => idx !== i))} className="text-white bg-red-500 rounded-full p-1"><X size={14}/></button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -278,15 +317,19 @@ export default function AdminRooms() {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 pt-6">
-              <button className="flex-1 bg-[#C6A45C] text-white py-4 rounded-xl font-bold uppercase tracking-[0.2em] hover:bg-[#b39352] transform active:scale-[0.99] transition-all cursor-pointer shadow-lg shadow-[#C6A45C]/30">
-                {editId ? "Update Property" : "Save New Room"}
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <button 
+                type="submit" 
+                disabled={createMutation.isPending || updateMutation.isPending}
+                className="flex-1 bg-[#C6A45C] text-white py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-[#b39352] transform active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-[#C6A45C]/20 disabled:opacity-50"
+              >
+                {createMutation.isPending || updateMutation.isPending ? "Processing..." : (editId ? "Update Room Details" : "Create New Room")}
               </button>
               {editId && (
                 <button 
                   type="button"
                   onClick={resetForm}
-                  className="px-10 py-4 border-2 border-[#C6A45C] text-[#C6A45C] rounded-xl font-bold hover:bg-[#C6A45C]/5 transition-colors cursor-pointer uppercase tracking-widest"
+                  className="px-8 py-4 border border-[#C6A45C] text-[#C6A45C] rounded-xl font-bold hover:bg-[#C6A45C]/5 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -295,49 +338,42 @@ export default function AdminRooms() {
           </form>
         </section>
 
-        <div className="flex items-center justify-between mb-8 border-b border-[#C6A45C]/20 pb-4">
-          <h2 className="text-xl font-bold text-[#C6A45C] uppercase tracking-[0.15em]">Live Inventory</h2>
-          <span className="bg-[#C6A45C]/10 text-[#C6A45C] px-4 py-1 rounded-full text-xs font-bold uppercase">{rooms.length} Rooms</span>
-        </div>
+        <h2 className="text-xl font-bold text-[#C6A45C] mb-6 uppercase tracking-widest">Existing Rooms</h2>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {rooms.map((room) => (
-            <div key={room._id} className="bg-white rounded-3xl overflow-hidden border border-[#C6A45C]/10 shadow-md hover:shadow-xl transition-all duration-300 group">
-              <div className="relative h-56 overflow-hidden">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {isLoading ? (
+            <p className="text-[#C6A45C]">Loading rooms...</p>
+          ) : rooms.map((room) => (
+            <div key={room._id} className="bg-white rounded-2xl overflow-hidden border border-[#C6A45C]/10 shadow-sm hover:shadow-md transition-shadow group">
+              <div className="relative aspect-[4/3] overflow-hidden">
                 <img
                   src={room.images?.length > 0 ? `${BASE_URL}${room.images}` : "/no-image.png"}
                   alt={room.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
-                <div className="absolute top-4 left-4">
-                  <span className="bg-white/95 backdrop-blur-md px-3 py-1 rounded-lg text-[#C6A45C] font-bold text-[10px] uppercase tracking-wider shadow-sm">
-                    {room.roomType}
-                  </span>
+                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-[#C6A45C] font-bold text-sm">
+                  {room.roomType}
                 </div>
               </div>
 
-              <div className="p-6">
-                <h3 className="font-bold text-lg text-slate-800 truncate mb-1">{room.name}</h3>
-                <div className="flex items-center justify-between">
-                   <p className="text-[#C6A45C] font-black text-xl">₹{room.price}</p>
-                   <div className="flex items-center gap-1 text-slate-400 text-[10px] font-bold uppercase">
-                     <span>{room.maxGuests} Guests</span>
-                   </div>
+              <div className="p-5">
+                <h3 className="font-bold text-lg text-slate-800 truncate">{room.name}</h3>
+                <div className="flex items-baseline gap-1 mt-1">
+                  <span className="text-[#C6A45C] font-bold text-xl">₹{room.price}</span>
+                  <span className="text-slate-400 text-xs uppercase tracking-tighter">/ night</span>
                 </div>
 
-                <div className="flex gap-3 mt-6">
+                <div className="flex gap-3 mt-5">
                   <button
                     onClick={() => handleEdit(room)}
-                    className="flex-1 flex items-center justify-center gap-2 bg-[#F9F8F6] text-[#C6A45C] py-3 rounded-xl border border-[#C6A45C]/20 hover:bg-[#C6A45C] hover:text-white transition-all cursor-pointer font-bold text-sm"
+                    className="flex-1 flex items-center justify-center gap-2 bg-[#F9F8F6] text-[#C6A45C] py-2.5 rounded-lg border border-[#C6A45C]/20 hover:bg-[#C6A45C] hover:text-white transition-all cursor-pointer"
                   >
-                    <Edit3 size={16} /> Edit
+                    <Edit3 size={16} /> <span className="text-sm font-semibold">Edit</span>
                   </button>
 
                   <button
-                    onClick={() => {
-                      if(window.confirm("Delete this room permanently?")) deleteMutation.mutate(room._id);
-                    }}
-                    className="w-12 flex items-center justify-center bg-red-50 text-red-500 rounded-xl border border-red-100 hover:bg-red-500 hover:text-white transition-all cursor-pointer"
+                    onClick={() => setDeleteModal({ show: true, id: room._id, name: room.name })}
+                    className="px-3 bg-red-50 text-red-500 rounded-lg border border-red-100 hover:bg-red-500 hover:text-white transition-all cursor-pointer"
                   >
                     <Trash2 size={18} />
                   </button>
